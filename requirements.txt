@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pydantic
+numpy
+scikit-learn
+pytest
+# TODO: implement
