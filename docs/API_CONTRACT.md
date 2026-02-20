@@ -1,17 +1,20 @@
-# API Contract (Planned)
+# API Contract (Day 1)
 
 ## Base assumptions
 
 - JSON over HTTP.
-- Versioning approach (to be implemented): `/api/v1/...`.
-- Heads-up Texas Hold'em only in first release.
+- Heads-up Texas Hold'em only.
+- In-memory session store for Day 1 (`GAMES` dictionary).
+- Players are `"hero"` and `"villain"`.
+- Streets are `"preflop"`, `"flop"`, `"turn"`, `"river"`, `"showdown"`.
+- Action set (v1): `"fold"`, `"check"`, `"call"`, `"raise"`.
 
-## Endpoints (planned)
+## Endpoints
 
 ### `POST /game/new`
-Create a new heads-up game instance.
+Create a new game and return its initial state.
 
-**Request (example)**
+Request example:
 
 ```json
 {
@@ -22,23 +25,23 @@ Create a new heads-up game instance.
 }
 ```
 
-**Response (example)**
+Response example:
 
 ```json
 {
   "game_id": "uuid-string",
   "street": "preflop",
   "pot": 15,
-  "hero_position": "button",
-  "legal_actions": ["fold", "call", "raise"],
+  "to_act": "hero",
+  "legal_actions": ["fold", "check", "call", "raise"],
   "state": {}
 }
 ```
 
 ### `POST /game/action`
-Apply one player action and advance game state.
+Apply one action to an existing game.
 
-**Request (example)**
+Request example:
 
 ```json
 {
@@ -49,45 +52,42 @@ Apply one player action and advance game state.
 }
 ```
 
-**Response (example)**
+Response example:
 
 ```json
 {
   "game_id": "uuid-string",
-  "street": "flop",
-  "pot": 75,
+  "street": "preflop",
+  "pot": 45,
   "to_act": "villain",
-  "legal_actions": ["fold", "call", "raise", "check"],
-  "terminal": false,
-  "result": null,
+  "legal_actions": ["fold", "check", "call", "raise"],
   "state": {}
 }
 ```
 
 ### `GET /game/state/{game_id}`
-Return current public and authorized private state.
+Return current game state.
 
-**Response (example)**
+Response example:
 
 ```json
 {
   "game_id": "uuid-string",
   "street": "turn",
-  "board": ["Ah", "Kd", "7c", "2s"],
   "pot": 135,
-  "stacks": {
-    "hero": 910,
-    "villain": 955
-  },
-  "last_action": {
-    "player": "villain",
-    "action": "call",
-    "amount": 30
-  },
+  "to_act": "hero",
+  "legal_actions": ["fold", "check", "call", "raise"],
   "state": {}
 }
 ```
 
 ### `GET /health`
-Service health/status placeholder.
+Service liveness endpoint.
 
+Response example:
+
+```json
+{
+  "status": "ok"
+}
+```
