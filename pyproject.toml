@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "probabilistic-poker-engine"
+version = "0.1.0"
+description = "Heads-up Texas Hold'em engine scaffold with FastAPI backend and future ML opponent"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "pydantic",
+  "numpy",
+  "scikit-learn",
+  "pytest",
+]
+
+[tool.pytest.ini_options]
+# TODO: implement
