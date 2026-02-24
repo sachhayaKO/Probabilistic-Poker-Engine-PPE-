@@ -12,10 +12,10 @@ dependencies = [
   "fastapi",
   "uvicorn",
   "pydantic",
-  "numpy",
-  "scikit-learn",
   "pytest",
+  "httpx",
 ]
 
 [tool.pytest.ini_options]
-# TODO: implement
+testpaths = ["backend/tests", "engine/tests"]
+pythonpath = ["."]
