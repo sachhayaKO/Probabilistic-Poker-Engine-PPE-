@@ -1,26 +1,25 @@
 from __future__ import annotations
 
-"""
-Day 1 Mini Spec: API Entrypoint
-
-Inputs:
-- HTTP requests routed to /health and /game/*.
-
-Outputs:
-- FastAPI app object for uvicorn.
-- Health payload {"status": "ok"}.
-
-Workflow:
-1. Initialize app.
-2. Register health endpoint.
-3. Include game router.
-"""
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from backend.app.core.logging import configure_logging, get_logger
 from backend.app.routes.game import router as game_router
+from backend.app.storage.db import init_db
 
-app = FastAPI(title="Probabilistic Poker Engine API")
+configure_logging()
+logger = get_logger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    init_db()
+    logger.info("database initialized")
+    yield
+
+
+app = FastAPI(title="Probabilistic Poker Engine API", lifespan=lifespan)
 
 
 @app.get("/health")

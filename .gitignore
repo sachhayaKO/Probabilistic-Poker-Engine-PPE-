@@ -22,3 +22,6 @@ htmlcov/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local sqlite db
+*.db
