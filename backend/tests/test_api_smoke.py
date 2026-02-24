@@ -3,9 +3,14 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 from backend.app.main import app
+from backend.app.storage.db import reset_db
 
 
 client = TestClient(app)
+
+
+def setup_function() -> None:
+    reset_db()
 
 
 def test_api_smoke_game_flow() -> None:
@@ -35,3 +40,17 @@ def test_api_smoke_game_flow() -> None:
     assert acted["game_id"] == game_id
     assert "legal_actions" in acted
     assert acted["to_act"] in {"hero", "villain"}
+
+
+def test_api_invalid_action_payload_rejected() -> None:
+    new_game = client.post(
+        "/game/new",
+        json={"stack_size": 1000, "small_blind": 5, "big_blind": 10, "seed": 123},
+    )
+    game_id = new_game.json()["game_id"]
+
+    invalid = client.post(
+        "/game/action",
+        json={"game_id": game_id, "player": "hero", "action": "bet"},
+    )
+    assert invalid.status_code == 422

@@ -1,25 +1,12 @@
 from __future__ import annotations
 
-"""
-Day 1 Mini Spec: API Schemas
-
-Inputs:
-- New game and action request JSON payloads.
-
-Outputs:
-- Pydantic-validated request objects and serialized response objects.
-
-Rules:
-- stack/blind fields must be positive.
-- action amount is optional but, if present, must be positive.
-
-Workflow:
-1. FastAPI validates incoming payloads with these models.
-2. Route handlers pass validated values into engine functions.
-3. Route handlers return GameResponse for stable client contract.
-"""
+from typing import Literal
 
 from pydantic import BaseModel, Field
+
+Player = Literal["hero", "villain"]
+Action = Literal["fold", "check", "call", "raise"]
+Street = Literal["preflop", "flop", "turn", "river", "showdown"]
 
 
 class NewGameRequest(BaseModel):
@@ -31,15 +18,15 @@ class NewGameRequest(BaseModel):
 
 class ActionRequest(BaseModel):
     game_id: str
-    player: str
-    action: str
+    player: Player
+    action: Action
     amount: int | None = Field(default=None, gt=0)
 
 
 class GameResponse(BaseModel):
     game_id: str
-    street: str
+    street: Street
     pot: int
-    to_act: str
-    legal_actions: list[str]
+    to_act: Player
+    legal_actions: list[Action]
     state: dict[str, object]
