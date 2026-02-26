@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 """
-Day 2 Mini Spec: Engine Street + Dealing Flow
+Mini Spec: Engine Street + Dealing Flow
 
 Inputs:
 - new_game(starting_stack, small_blind, big_blind, seed)
@@ -65,7 +65,7 @@ def new_game(
         game_id=str(uuid.uuid4()),
         seed=seed,
         street="preflop",
-        # Day 2 keeps pot simple; blinds can be modeled in betting engine later.
+        # Current simplified model keeps pot simple; blinds can be modeled in betting engine later.
         pot=0,
         stacks={"hero": starting_stack, "villain": starting_stack},
         hands={"hero": hero_hand, "villain": villain_hand},

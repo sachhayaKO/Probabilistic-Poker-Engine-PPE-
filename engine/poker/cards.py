@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 """
-Day 2 Mini Spec: Cards and Deck
+Mini Spec: Cards and Deck
 
 Inputs:
 - Card string tokens like "Ah", "Td", "2c".

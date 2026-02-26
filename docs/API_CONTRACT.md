@@ -1,18 +1,17 @@
-# API Contract (Day 1)
+# API Contract
 
 ## Base assumptions
 
 - JSON over HTTP.
 - Heads-up Texas Hold'em only.
-- In-memory session store for Day 1 (`GAMES` dictionary).
-- Players are `"hero"` and `"villain"`.
-- Streets are `"preflop"`, `"flop"`, `"turn"`, `"river"`, `"showdown"`.
-- Action set (v1): `"fold"`, `"check"`, `"call"`, `"raise"`.
+- In-memory state storage (`game_store`) keyed by `game_id`.
+- Players are `"hero"` and `"villain"` internally.
+- API responses expose only the player's hole cards (bot hole cards remain private).
 
 ## Endpoints
 
-### `POST /game/new`
-Create a new game and return its initial state.
+### `POST /start_game`
+Create a new game and return an initial client-safe state snapshot.
 
 Request example:
 
@@ -31,53 +30,30 @@ Response example:
 {
   "game_id": "uuid-string",
   "street": "preflop",
-  "pot": 15,
-  "to_act": "hero",
-  "legal_actions": ["fold", "check", "call", "raise"],
-  "state": {}
+  "pot": 0,
+  "player_stack": 1000,
+  "bot_stack": 1000,
+  "player_hand": ["Ah", "Kd"],
+  "board": [],
+  "betting_history": []
 }
 ```
 
-### `POST /game/action`
-Apply one action to an existing game.
-
-Request example:
-
-```json
-{
-  "game_id": "uuid-string",
-  "player": "hero",
-  "action": "raise",
-  "amount": 30
-}
-```
+### `GET /game_state/{game_id}`
+Return the current client-safe state snapshot for a game.
 
 Response example:
 
 ```json
 {
   "game_id": "uuid-string",
-  "street": "preflop",
-  "pot": 45,
-  "to_act": "villain",
-  "legal_actions": ["fold", "check", "call", "raise"],
-  "state": {}
-}
-```
-
-### `GET /game/state/{game_id}`
-Return current game state.
-
-Response example:
-
-```json
-{
-  "game_id": "uuid-string",
-  "street": "turn",
-  "pot": 135,
-  "to_act": "hero",
-  "legal_actions": ["fold", "check", "call", "raise"],
-  "state": {}
+  "street": "flop",
+  "pot": 0,
+  "player_stack": 1000,
+  "bot_stack": 1000,
+  "player_hand": ["Ah", "Kd"],
+  "board": ["7c", "2s", "Td"],
+  "betting_history": []
 }
 ```
 

@@ -1,68 +1,86 @@
 from __future__ import annotations
 
+"""
+Game routes for creating and retrieving poker game state.
+
+Route handlers convert between API payloads and engine state objects while
+keeping bot private cards hidden in client responses.
+"""
+
 from fastapi import APIRouter, HTTPException
 
-from backend.app.schemas.game import ActionRequest, GameResponse, NewGameRequest
-from backend.app.storage import ActionRecord, load_game, save_action, save_game
-from engine.poker import GameState, apply_action, legal_actions, new_game
+from backend.app.schemas.game import GameStateResponse, StartGameRequest
+from backend.app.storage import load_game_state, save_game_state
+from engine.poker import new_game
 
-router = APIRouter(prefix="/game", tags=["game"])
+router = APIRouter(tags=["game"])
 
 
-@router.post("/new", response_model=GameResponse)
-def create_game(payload: NewGameRequest) -> GameResponse:
+@router.post("/start_game", response_model=GameStateResponse)
+def start_game(payload: StartGameRequest) -> GameStateResponse:
     state = new_game(
         stack_size=payload.stack_size,
         small_blind=payload.small_blind,
         big_blind=payload.big_blind,
         seed=payload.seed,
     )
-    save_game(state)
-    return _to_response(state)
+    save_game_state(state.to_dict())
+    return _to_game_state_response(state.to_dict())
 
 
-@router.post("/action", response_model=GameResponse)
-def act(payload: ActionRequest) -> GameResponse:
-    state = load_game(payload.game_id)
-    if state is None:
+@router.get("/game_state/{game_id}", response_model=GameStateResponse)
+def game_state(game_id: str) -> GameStateResponse:
+    state_dict = load_game_state(game_id)
+    if state_dict is None:
         raise HTTPException(status_code=404, detail="game not found")
-
-    try:
-        updated = apply_action(
-            state=state,
-            player=payload.player,  # type: ignore[arg-type]
-            action=payload.action,
-            amount=payload.amount,
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-
-    save_game(updated)
-    save_action(
-        ActionRecord(
-            game_id=payload.game_id,
-            player=payload.player,
-            action=payload.action,
-            amount=payload.amount,
-        )
-    )
-    return _to_response(updated)
+    return _to_game_state_response(state_dict)
 
 
-@router.get("/state/{game_id}", response_model=GameResponse)
-def game_state(game_id: str) -> GameResponse:
-    state = load_game(game_id)
-    if state is None:
-        raise HTTPException(status_code=404, detail="game not found")
-    return _to_response(state)
+def _to_game_state_response(state_dict: dict[str, object]) -> GameStateResponse:
+    hands = state_dict.get("hands", {})
+    if not isinstance(hands, dict):
+        raise ValueError("invalid state: hands must be a dictionary")
 
+    hero_cards = hands.get("hero", [])
+    if not isinstance(hero_cards, list):
+        raise ValueError("invalid state: hero hand must be a list")
 
-def _to_response(state: GameState) -> GameResponse:
-    return GameResponse(
-        game_id=state.game_id,
-        street=state.street,
-        pot=state.pot,
-        to_act=state.to_act,
-        legal_actions=legal_actions(state),
-        state=state.to_public_dict(),
+    stacks = state_dict.get("stacks", {})
+    if not isinstance(stacks, dict):
+        raise ValueError("invalid state: stacks must be a dictionary")
+
+    betting_history = state_dict.get("betting_history", [])
+    if not isinstance(betting_history, list):
+        raise ValueError("invalid state: betting_history must be a list")
+
+    board = state_dict.get("board", [])
+    if not isinstance(board, list):
+        raise ValueError("invalid state: board must be a list")
+
+    game_id = state_dict.get("game_id")
+    street = state_dict.get("street")
+    pot = state_dict.get("pot")
+    hero_stack = stacks.get("hero")
+    villain_stack = stacks.get("villain")
+
+    if not isinstance(game_id, str):
+        raise ValueError("invalid state: game_id must be a string")
+    if not isinstance(street, str):
+        raise ValueError("invalid state: street must be a string")
+    if not isinstance(pot, int):
+        raise ValueError("invalid state: pot must be an integer")
+    if not isinstance(hero_stack, int):
+        raise ValueError("invalid state: hero stack must be an integer")
+    if not isinstance(villain_stack, int):
+        raise ValueError("invalid state: villain stack must be an integer")
+
+    return GameStateResponse(
+        game_id=game_id,
+        street=street,
+        pot=pot,
+        player_stack=hero_stack,
+        bot_stack=villain_stack,
+        player_hand=[str(card) for card in hero_cards],
+        board=[str(card) for card in board],
+        betting_history=betting_history,
     )

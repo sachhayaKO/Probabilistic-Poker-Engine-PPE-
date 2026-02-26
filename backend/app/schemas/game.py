@@ -1,32 +1,32 @@
 from __future__ import annotations
 
+"""
+API schemas for game creation and state responses.
+
+These models lock request/response shapes so frontend integrations can rely on a
+stable payload contract.
+"""
+
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
-Player = Literal["hero", "villain"]
-Action = Literal["fold", "check", "call", "raise"]
 Street = Literal["preflop", "flop", "turn", "river", "showdown"]
 
 
-class NewGameRequest(BaseModel):
+class StartGameRequest(BaseModel):
     stack_size: int = Field(default=1000, gt=0)
     small_blind: int = Field(default=5, gt=0)
     big_blind: int = Field(default=10, gt=0)
     seed: int | None = None
 
 
-class ActionRequest(BaseModel):
-    game_id: str
-    player: Player
-    action: Action
-    amount: int | None = Field(default=None, gt=0)
-
-
-class GameResponse(BaseModel):
+class GameStateResponse(BaseModel):
     game_id: str
     street: Street
     pot: int
-    to_act: Player
-    legal_actions: list[Action]
-    state: dict[str, object]
+    player_stack: int
+    bot_stack: int
+    player_hand: list[str]
+    board: list[str]
+    betting_history: list[dict[str, object]]

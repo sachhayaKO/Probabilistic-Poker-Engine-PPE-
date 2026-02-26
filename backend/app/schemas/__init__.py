@@ -1,3 +1,3 @@
-from backend.app.schemas.game import ActionRequest, GameResponse, NewGameRequest
+from backend.app.schemas.game import GameStateResponse, StartGameRequest
 
-__all__ = ["ActionRequest", "GameResponse", "NewGameRequest"]
+__all__ = ["StartGameRequest", "GameStateResponse"]
