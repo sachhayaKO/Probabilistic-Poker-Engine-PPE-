@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 """
-Day 2 Mini Spec: Game State Container
+Mini Spec: Game State Container
 
 Inputs:
 - Engine-generated game metadata and per-player card/state fields.

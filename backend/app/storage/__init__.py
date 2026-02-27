@@ -1,4 +1,3 @@
-from backend.app.storage.db import init_db, list_actions, load_game, reset_db, save_action, save_game
-from backend.app.storage.models import ActionRecord
+from backend.app.storage.db import game_store, init_db, load_game_state, reset_db, save_game_state
 
-__all__ = ["ActionRecord", "init_db", "list_actions", "load_game", "reset_db", "save_action", "save_game"]
+__all__ = ["game_store", "init_db", "reset_db", "save_game_state", "load_game_state"]

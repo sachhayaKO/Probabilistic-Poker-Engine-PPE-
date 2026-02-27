@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     init_db()
-    logger.info("database initialized")
+    logger.info("in-memory store initialized")
     yield
 
 
