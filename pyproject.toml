@@ -15,6 +15,7 @@ dependencies = [
   "pytest",
   "httpx",
   "psycopg[binary]",
+  "torch>=2.0",
 ]
 
 [tool.pytest.ini_options]
