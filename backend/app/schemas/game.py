@@ -20,6 +20,12 @@ class StartGameRequest(BaseModel):
     big_blind: int = Field(default=10, gt=0)
     seed: int | None = None
 
+    @model_validator(mode="after")
+    def big_blind_must_exceed_small_blind(self) -> "StartGameRequest":
+        if self.big_blind < self.small_blind:
+            raise ValueError("big_blind must be >= small_blind")
+        return self
+
 
 class GameStateResponse(BaseModel):
     game_id: str
