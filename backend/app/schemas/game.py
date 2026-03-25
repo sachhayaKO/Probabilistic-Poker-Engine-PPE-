@@ -9,7 +9,7 @@ stable payload contract.
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 Street = Literal["preflop", "flop", "turn", "river", "showdown"]
 
