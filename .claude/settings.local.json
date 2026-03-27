@@ -4,7 +4,10 @@
       "Bash(python -c \"import torch; print\\(torch.__version__\\)\")",
       "Bash(KMP_DUPLICATE_LIB_OK=TRUE python -c \"import torch; print\\(torch.__version__\\)\")",
       "Bash(KMP_DUPLICATE_LIB_OK=TRUE python -m pytest engine/tests/ml/ -x -q 2>&1)",
-      "Bash(KMP_DUPLICATE_LIB_OK=TRUE python -m pytest engine/tests/ -q 2>&1)"
+      "Bash(KMP_DUPLICATE_LIB_OK=TRUE python -m pytest engine/tests/ -q 2>&1)",
+      "Bash(python3:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)"
     ]
   }
 }
