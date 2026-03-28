@@ -12,11 +12,21 @@
   }
 
   body {
-    background-color: #0d1117;
-    color: #e2e8f0;
+    background-color: #000000;
+    color: #f8fafc;
     font-family: 'DM Sans', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 0;
   }
 
   code, pre, .font-mono {
@@ -26,19 +36,23 @@
 
 @layer components {
   .card {
-    @apply bg-navy-900 border border-white/[0.06] rounded-xl p-5;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04);
+    @apply bg-[#0a0a0a] border border-red-900/40 rounded-xl p-5;
+    box-shadow: 0 0 0 1px rgba(220,38,38,0.08), 0 4px 24px rgba(0,0,0,0.8);
     transition: border-color 200ms ease, box-shadow 200ms ease;
   }
 
   .card:hover {
-    @apply border-white/[0.10];
-    box-shadow: 0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.07);
+    border-color: rgba(220,38,38,0.35);
+    box-shadow: 0 0 20px rgba(220,38,38,0.1), 0 4px 24px rgba(0,0,0,0.9);
+  }
+
+  .stat-card:hover {
+    box-shadow: 0 0 24px rgba(220,38,38,0.15);
   }
 
   .badge-live {
     @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-semibold;
-    @apply bg-green-500/10 text-green-400 border border-green-500/20;
+    @apply bg-red-500/10 text-red-400 border border-red-500/30;
   }
 
   .badge-scaffolded {
@@ -53,7 +67,7 @@
 
   .method-post {
     @apply font-mono text-xs font-bold px-2 py-0.5 rounded;
-    @apply bg-green-500/15 text-green-400 border border-green-500/25;
+    @apply bg-red-500/15 text-red-400 border border-red-500/25;
   }
 
   .method-get {
@@ -68,7 +82,7 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0d1117;
+  background: #000000;
 }
 ::-webkit-scrollbar-thumb {
   background: #334155;

@@ -7,18 +7,24 @@ export default {
   theme: {
     extend: {
       colors: {
-        navy: {
-          950: '#0d1117',
-          900: '#0f172a',
-          800: '#1e293b',
-          700: '#334155',
-          600: '#475569',
+        black: {
+          950: '#000000',
+          900: '#0a0a0a',
+          800: '#111111',
+          700: '#1a1a1a',
+          600: '#222222',
+        },
+        red: {
+          900: '#3b0000',
+          700: '#7f1d1d',
+          500: '#dc2626',
+          400: '#ef4444',
+          300: '#fca5a5',
         },
         accent: {
-          green: '#22c55e',
-          amber: '#f59e0b',
-          blue: '#3b82f6',
-          red: '#ef4444',
+          red: '#dc2626',
+          gold: '#ca8a04',
+          white: '#f8fafc',
         }
       },
       fontFamily: {
@@ -26,10 +32,9 @@ export default {
         sans: ['"DM Sans"', 'Geist', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        'glow-green': '0 0 12px rgba(34,197,94,0.25)',
-        'glow-blue': '0 0 12px rgba(59,130,246,0.25)',
-        'glow-amber': '0 0 12px rgba(245,158,11,0.25)',
-        'card': '0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04)',
+        'glow-red': '0 0 12px rgba(220,38,38,0.25)',
+        'glow-gold': '0 0 12px rgba(202,138,4,0.25)',
+        'card': '0 0 0 1px rgba(220,38,38,0.08), 0 4px 24px rgba(0,0,0,0.8)',
       },
     },
   },

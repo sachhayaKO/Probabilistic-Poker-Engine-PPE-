@@ -76,19 +76,19 @@ const testFiles = [
 ]
 
 const techStack = [
-  { label: 'Python 3.11', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
-  { label: 'FastAPI', color: '#22c55e', bg: 'rgba(34,197,94,0.1)' },
-  { label: 'PyTorch', color: '#f97316', bg: 'rgba(249,115,22,0.1)' },
-  { label: 'Pydantic', color: '#a855f7', bg: 'rgba(168,85,247,0.1)' },
-  { label: 'Pytest', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-  { label: 'Vite', color: '#22d3ee', bg: 'rgba(34,211,238,0.1)' },
-  { label: 'React', color: '#38bdf8', bg: 'rgba(56,189,248,0.1)' },
+  { label: 'Python 3.11', color: '#f8fafc', bg: 'rgba(248,250,252,0.05)' },
+  { label: 'FastAPI', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
+  { label: 'PyTorch', color: '#dc2626', bg: 'rgba(220,38,38,0.1)' },
+  { label: 'Pydantic', color: '#ca8a04', bg: 'rgba(202,138,4,0.1)' },
+  { label: 'Pytest', color: '#ca8a04', bg: 'rgba(202,138,4,0.08)' },
+  { label: 'Vite', color: '#f8fafc', bg: 'rgba(248,250,252,0.04)' },
+  { label: 'React', color: '#f8fafc', bg: 'rgba(248,250,252,0.05)' },
 ]
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: PipelineStatus }) {
-  if (status === 'LIVE') return <span className="badge-live"><span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />LIVE</span>
+  if (status === 'LIVE') return <span className="badge-live"><span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />LIVE</span>
   if (status === 'SCAFFOLDED') return <span className="badge-scaffolded"><span className="w-1.5 h-1.5 rounded-full bg-amber-400" />SCAFFOLDED</span>
   return <span className="badge-todo"><span className="w-1.5 h-1.5 rounded-full bg-slate-500" />TODO</span>
 }
@@ -105,12 +105,12 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 function Header() {
   return (
-    <header className="border-b border-white/[0.06] bg-navy-950/80 backdrop-blur-sm sticky top-0 z-40">
+    <header className="border-b border-red-900/40 border-t-2 border-t-red-600 bg-black-950/80 backdrop-blur-sm sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* Card suit icon */}
-          <div className="w-8 h-8 rounded-lg bg-green-500/15 border border-green-500/25 flex items-center justify-center">
-            <svg viewBox="0 0 16 16" className="w-4 h-4 fill-green-400" aria-hidden="true">
+          <div className="w-8 h-8 rounded-lg bg-red-500/15 border border-red-500/25 flex items-center justify-center">
+            <svg viewBox="0 0 16 16" className="w-4 h-4 fill-red-400" aria-hidden="true">
               <path d="M8 1C5 1 2 3.5 2 6.5 2 10 5 12 8 15c3-3 6-5 6-8.5C14 3.5 11 1 8 1z" />
             </svg>
           </div>
@@ -153,13 +153,13 @@ function MilestoneTracker() {
         <h3 id="milestone-heading" className="text-base font-semibold text-slate-100">
           Sprint Progress
         </h3>
-        <span className="text-sm font-mono font-semibold text-green-400">{done}/{total} · {pct}%</span>
+        <span className="text-sm font-mono font-semibold text-red-400">{done}/{total} · {pct}%</span>
       </div>
 
       {/* Progress bar */}
       <div className="w-full h-2 bg-slate-800 rounded-full mb-5 overflow-hidden" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${pct}% complete`}>
         <div
-          className="h-full rounded-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-700"
+          className="h-full rounded-full bg-gradient-to-r from-red-700 to-red-500 transition-all duration-700"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -169,17 +169,17 @@ function MilestoneTracker() {
         {milestones.map((m, i) => (
           <li key={i} className="flex items-start gap-3">
             {m.done ? (
-              <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 shrink-0" aria-hidden="true" />
+              <CheckCircle2 className="w-4 h-4 text-red-500 mt-0.5 shrink-0" aria-hidden="true" />
             ) : (
-              <Clock className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" aria-hidden="true" />
+              <Clock className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" aria-hidden="true" />
             )}
-            <span className={`text-sm leading-snug ${m.done ? 'text-slate-300' : 'text-amber-300'}`}>
+            <span className={`text-sm leading-snug ${m.done ? 'text-slate-300' : 'text-slate-400'}`}>
               {m.label}
             </span>
             {m.done ? (
-              <span className="ml-auto shrink-0 text-xs font-mono text-green-500 bg-green-500/10 px-2 py-0.5 rounded">DONE</span>
+              <span className="ml-auto shrink-0 text-xs font-mono text-red-400 bg-red-500/10 px-2 py-0.5 rounded">DONE</span>
             ) : (
-              <span className="ml-auto shrink-0 text-xs font-mono text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded">IN PROGRESS</span>
+              <span className="ml-auto shrink-0 text-xs font-mono text-slate-400 bg-slate-500/10 px-2 py-0.5 rounded">IN PROGRESS</span>
             )}
           </li>
         ))}
@@ -192,10 +192,10 @@ function MilestoneTracker() {
 
 function ArchitectureOverview() {
   const nodes = [
-    { label: 'Client / UI', sub: 'Browser', color: '#3b82f6' },
-    { label: 'FastAPI Backend', sub: 'REST API', color: '#22c55e' },
-    { label: 'Poker Engine', sub: 'Game Logic', color: '#a855f7' },
-    { label: 'ML Bot', sub: 'PPO + Monte Carlo', color: '#f59e0b' },
+    { label: 'Client / UI', sub: 'Browser', color: '#f8fafc' },
+    { label: 'FastAPI Backend', sub: 'REST API', color: '#dc2626' },
+    { label: 'Poker Engine', sub: 'Game Logic', color: '#ef4444' },
+    { label: 'ML Bot', sub: 'PPO + Monte Carlo', color: '#ca8a04' },
     { label: 'Storage', sub: 'In-memory store', color: '#64748b' },
   ]
 
@@ -234,10 +234,10 @@ function ArchitectureOverview() {
       {/* Legend row */}
       <div className="mt-4 pt-4 border-t border-white/[0.05] flex flex-wrap gap-x-6 gap-y-2">
         {[
-          { color: '#3b82f6', label: 'Presentation layer' },
-          { color: '#22c55e', label: 'API layer' },
-          { color: '#a855f7', label: 'Domain logic' },
-          { color: '#f59e0b', label: 'ML inference' },
+          { color: '#f8fafc', label: 'Presentation layer' },
+          { color: '#dc2626', label: 'API layer' },
+          { color: '#ef4444', label: 'Domain logic' },
+          { color: '#ca8a04', label: 'ML inference' },
           { color: '#64748b', label: 'Persistence' },
         ].map((item, i) => (
           <div key={i} className="flex items-center gap-2 text-xs text-slate-500">
@@ -307,7 +307,7 @@ function MLPipelineStatus() {
           <div className="flex items-center gap-1 min-w-max text-xs font-mono">
             {['State Encoder', 'MC Equity', 'ActorCritic', 'BotAgent'].map((step, i, arr) => (
               <div key={i} className="flex items-center gap-1">
-                <span className="px-2.5 py-1 rounded-md bg-green-500/10 text-green-400 border border-green-500/20">
+                <span className="px-2.5 py-1 rounded-md bg-red-500/10 text-red-400 border border-red-500/20">
                   {step}
                 </span>
                 {i < arr.length - 1 && <ChevronRight className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />}
@@ -323,9 +323,9 @@ function MLPipelineStatus() {
 // ─── Section: Test Coverage ───────────────────────────────────────────────────
 
 const moduleColors: Record<string, string> = {
-  Engine: '#a855f7',
-  ML: '#3b82f6',
-  Backend: '#22c55e',
+  Engine: '#dc2626',
+  ML: '#ef4444',
+  Backend: '#ca8a04',
 }
 
 function TestCoverage() {
@@ -346,7 +346,7 @@ function TestCoverage() {
         <div className="xl:col-span-2 card">
           <div className="flex items-center justify-between mb-4">
             <h3 id="tests-heading" className="text-sm font-semibold text-slate-200">Test Files</h3>
-            <span className="text-xs font-mono text-green-400 bg-green-500/10 px-2.5 py-1 rounded-full border border-green-500/20">
+            <span className="text-xs font-mono text-red-400 bg-red-500/10 px-2.5 py-1 rounded-full border border-red-500/20">
               {total} total
             </span>
           </div>
@@ -418,7 +418,7 @@ function TestCoverage() {
                 />
                 <Tooltip
                   contentStyle={{
-                    background: '#1e293b',
+                    background: '#111111',
                     border: '1px solid rgba(255,255,255,0.08)',
                     borderRadius: 8,
                     fontFamily: 'JetBrains Mono',
@@ -468,7 +468,7 @@ function TechStackFooter() {
             Probabilistic Poker Engine · ML Research Platform
           </p>
           <div className="flex items-center gap-1.5 text-xs text-slate-600 font-mono">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" aria-hidden="true" />
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" aria-hidden="true" />
             Dashboard live
           </div>
         </div>
@@ -481,19 +481,19 @@ function TechStackFooter() {
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-[#0d1117] text-slate-200">
+    <div className="min-h-screen bg-[#000000] text-[#f8fafc]">
       <Header />
 
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Hero stats row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'Sprint Progress', value: '86%', sub: '6 of 7 milestones', color: '#22c55e' },
-            { label: 'Tests Passing', value: '30', sub: 'across 7 files', color: '#3b82f6' },
-            { label: 'API Endpoints', value: '3', sub: 'all documented', color: '#a855f7' },
-            { label: 'ML Components', value: '5 / 6', sub: 'LIVE in pipeline', color: '#f59e0b' },
+            { label: 'Sprint Progress', value: '86%', sub: '6 of 7 milestones', color: '#dc2626' },
+            { label: 'Tests Passing', value: '30', sub: 'across 7 files', color: '#f8fafc' },
+            { label: 'API Endpoints', value: '3', sub: 'all documented', color: '#dc2626' },
+            { label: 'ML Components', value: '5 / 6', sub: 'LIVE in pipeline', color: '#ca8a04' },
           ].map((stat, i) => (
-            <div key={i} className="card">
+            <div key={i} className="card stat-card">
               <div className="text-2xl font-bold font-mono" style={{ color: stat.color }}>
                 {stat.value}
               </div>
