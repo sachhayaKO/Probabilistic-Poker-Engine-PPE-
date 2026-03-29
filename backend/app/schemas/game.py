@@ -28,7 +28,7 @@ class StartGameRequest(BaseModel):
 class ActionRequest(BaseModel):
     game_id: str
     player: Literal["hero"] = "hero"
-    action: str
+    action: Literal["fold", "check", "call", "raise"]
     amount: int | None = None
 
 
@@ -42,7 +42,7 @@ class GameStateResponse(BaseModel):
     villain_hand: list[str] = []
     board: list[str]
     betting_history: list[dict[str, object]]
-    to_act: str = "hero"
+    to_act: Literal["hero", "villain"] = "hero"
     legal_actions: list[str] = []
     hero_equity: float | None = None
     winner: str | None = None
