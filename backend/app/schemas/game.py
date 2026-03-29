@@ -2,9 +2,6 @@ from __future__ import annotations
 
 """
 API schemas for game creation and state responses.
-
-These models lock request/response shapes so frontend integrations can rely on a
-stable payload contract.
 """
 
 from typing import Literal
@@ -19,12 +16,20 @@ class StartGameRequest(BaseModel):
     small_blind: int = Field(default=5, gt=0)
     big_blind: int = Field(default=10, gt=0)
     seed: int | None = None
+    difficulty: Literal["random", "cheat", "ppo"] = "random"
 
     @model_validator(mode="after")
     def big_blind_must_exceed_small_blind(self) -> "StartGameRequest":
         if self.big_blind < self.small_blind:
             raise ValueError("big_blind must be >= small_blind")
         return self
+
+
+class ActionRequest(BaseModel):
+    game_id: str
+    player: Literal["hero"] = "hero"
+    action: str
+    amount: int | None = None
 
 
 class GameStateResponse(BaseModel):
@@ -34,5 +39,10 @@ class GameStateResponse(BaseModel):
     player_stack: int
     bot_stack: int
     player_hand: list[str]
+    villain_hand: list[str] = []
     board: list[str]
     betting_history: list[dict[str, object]]
+    to_act: str = "hero"
+    legal_actions: list[str] = []
+    hero_equity: float | None = None
+    winner: str | None = None
