@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException
 
 from backend.app.schemas.game import ActionRequest, GameStateResponse, StartGameRequest
 from backend.app.storage import load_game_state, save_game_state
-from engine.poker.cards import Card, Deck
+from engine.poker.cards import Card, Deck, RANKS, SUITS
 from engine.poker.evaluator import evaluate_hand
 from engine.poker.game import apply_action
 from engine.poker.game import legal_actions as get_legal_actions
@@ -30,6 +30,10 @@ def _serialize_deck(deck: Deck) -> list[str]:
 
 def _deserialize_deck(card_strings: list[str]) -> Deck:
     deck = Deck()
+    # NOTE: Directly setting _cards bypasses Deck's public API. Deck has no factory
+    # that accepts a pre-built card list. The _rng is freshly seeded by system entropy,
+    # which means seeded-game reproducibility is broken if shuffle() is called after
+    # deserialization. Fixable by adding Deck.from_cards() to the engine.
     deck._cards = [Card.from_str(s) for s in card_strings]
     return deck
 
@@ -102,8 +106,6 @@ def _cheat_bot_action(state: GameState, big_blind: int) -> tuple[str, int | None
     board = state.board
 
     known_strs = {str(c) for c in hero_hole + villain_hole + board}
-    from engine.poker.cards import RANKS, SUITS
-
     unknown = [
         Card(rank=r, suit=s)
         for s in SUITS
@@ -309,7 +311,11 @@ def action(payload: ActionRequest) -> GameStateResponse:
         # Bot acts if it's now the villain's turn and game is still live
         if state.to_act == "villain" and state.street != "showdown":
             bot_action, bot_amount = _get_bot_action(state, difficulty, big_blind)
-            apply_action(state, "villain", bot_action, bot_amount)
+            try:
+                apply_action(state, "villain", bot_action, bot_amount)
+            except ValueError:
+                bot_action, bot_amount = "check", None
+                apply_action(state, "villain", bot_action, bot_amount)
             if bot_action == "fold":
                 winner = "hero"
 
@@ -331,6 +337,7 @@ def action(payload: ActionRequest) -> GameStateResponse:
     new_dict["small_blind"] = int(state_dict.get("small_blind", 5))
     new_dict["legal_actions"] = get_legal_actions(state)
     if winner is not None:
+        new_dict["legal_actions"] = []
         new_dict["winner"] = winner
     if villain_hand:
         new_dict["villain_hand"] = villain_hand

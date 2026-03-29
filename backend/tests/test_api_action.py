@@ -69,11 +69,10 @@ def test_action_raises_on_unknown_game() -> None:
     assert response.status_code == 404
 
 
-def test_action_invalid_action_returns_400() -> None:
+def test_action_invalid_action_returns_422() -> None:
     game = _start()
     response = client.post("/action", json={"game_id": game["game_id"], "action": "shove"})
-    # "shove" is not a valid Literal action; FastAPI may return 400 (ValueError) or 422 (schema validation)
-    assert response.status_code in (400, 422)
+    assert response.status_code == 422
 
 
 def test_action_raise_adds_to_pot() -> None:
