@@ -5,5 +5,5 @@ import react from '@vitejs/plugin-react'
 // Change to '/Probabilistic-Poker-Engine-PPE-/' if deploying to GitHub Pages
 export default defineConfig({
   plugins: [react()],
-  base: '/',
+  base: '/Probabilistic-Poker-Engine-PPE-/',
 })
