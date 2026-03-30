@@ -28,27 +28,16 @@ npm run preview   # preview the production build locally
 
 ## Deploy to GitHub Pages
 
-1. In `vite.config.ts`, set the `base` option to match your repo name:
-   ```ts
-   base: '/Probabilistic-Poker-Engine-PPE-/'
-   ```
-2. Build the project:
-   ```bash
-   npm run build
-   ```
-3. Push the `dist/` folder to the `gh-pages` branch, or use the `gh-pages` npm package:
-   ```bash
-   npx gh-pages -d dist
-   ```
+Deployment is automated via GitHub Actions (`.github/workflows/deploy.yml`). Every push to `main` builds the frontend and publishes the `dist/` directory to GitHub Pages.
 
-## Dashboard Sections
+**Backend URL configuration**
 
-| Section | Description |
-|---------|-------------|
-| Hero Stats | Sprint progress, test count, API endpoints, ML component status |
-| Milestone Tracker | Week 1 checklist with progress bar |
-| Architecture Overview | Component map with arrows |
-| API Endpoints | Live endpoint cards with example responses |
-| ML Pipeline Status | Per-component status badges |
-| Test Coverage | File-level breakdown with bar chart |
-| Tech Stack Footer | Language/framework badges |
+The frontend reads the API base URL from the `VITE_API_BASE_URL` environment variable at build time.
+
+- **Local development**: copy `.env.example` to `.env.local` — it defaults to `http://localhost:8000`.
+- **Hosted backend**: add `VITE_API_BASE_URL` as a GitHub Actions secret (`Settings → Secrets and variables → Actions`) pointing at your deployed backend. If the secret is not set, the build falls back to `http://localhost:8000`, which means the hosted frontend will only work when the user also has the backend running locally.
+
+```bash
+# .env.local (not committed)
+VITE_API_BASE_URL=https://your-backend.example.com
+```
