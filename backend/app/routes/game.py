@@ -8,6 +8,7 @@ import random as stdlib_random
 
 from fastapi import APIRouter, HTTPException
 
+from backend.app.core.logging import get_logger
 from backend.app.schemas.game import ActionRequest, GameStateResponse, StartGameRequest
 from backend.app.storage import load_game_state, save_game_state
 from engine.poker.cards import Card, Deck, RANKS, SUITS
@@ -17,6 +18,8 @@ from engine.poker.game import legal_actions as get_legal_actions
 from engine.poker.game import new_game
 from engine.poker.ml.equity import run_equity_estimate
 from engine.poker.state import GameState
+
+logger = get_logger(__name__)
 
 router = APIRouter(tags=["game"])
 
@@ -313,7 +316,8 @@ def action(payload: ActionRequest) -> GameStateResponse:
             bot_action, bot_amount = _get_bot_action(state, difficulty, big_blind)
             try:
                 apply_action(state, "villain", bot_action, bot_amount)
-            except ValueError:
+            except ValueError as exc:
+                logger.warning("bot action %s failed (%s), falling back to check", bot_action, exc)
                 bot_action, bot_amount = "check", None
                 apply_action(state, "villain", bot_action, bot_amount)
             if bot_action == "fold":
