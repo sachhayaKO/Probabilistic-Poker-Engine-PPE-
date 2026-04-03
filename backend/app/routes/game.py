@@ -276,6 +276,9 @@ def game_state(game_id: str) -> GameStateResponse:
     winner = str(stored_winner) if stored_winner else None
     hero_equity: float | None = None
 
+    if winner is not None:
+        state_dict["legal_actions"] = []
+
     if state_dict.get("street") != "showdown" and winner is None:
         state = _reconstruct_game_state(state_dict)
         hero_equity = run_equity_estimate(state.hands["hero"], state.board)
