@@ -47,12 +47,17 @@ backend/      FastAPI app, routes (/start_game, /action, /game_state), schemas, 
 engine/       Pure-Python poker engine: cards, evaluator, betting rounds, game loop, MC equity
 frontend/     React/TypeScript/Tailwind game UI
 scripts/      Self-play PPO training (train_self_play.py) and utility scripts
+scripts/checkpoints/  PPO checkpoint storage (checkpoint_latest.pt loaded at runtime)
 docs/         Architecture, API contract, state representation, and decision log
 ```
 
 ## Running tests
 
 ```bash
+# Short form — pyproject.toml sets testpaths automatically
+pytest
+
+# Equivalent explicit form
 pytest backend/tests/ engine/tests/ -v
 ```
 
@@ -62,7 +67,7 @@ pytest backend/tests/ engine/tests/ -v
 |------|-------------|
 | `random` | Uniform action sampling — fold/call/raise with equal probability |
 | `cheat` | Perfect-information Monte Carlo: sees both hole cards, runs 300 rollouts to pick the highest-EV action |
-| `ppo` | PPO-trained neural agent — loads checkpoint from `scripts/checkpoints/checkpoint_latest.pt` |
+| `ppo` | PPO-trained neural agent — loads checkpoint from `scripts/checkpoints/checkpoint_latest.pt`; falls back to random if no checkpoint exists |
 
 ## ML pipeline
 
