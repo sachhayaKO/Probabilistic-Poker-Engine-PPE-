@@ -4,3 +4,4 @@ pydantic
 pytest
 httpx
 psycopg[binary]
+torch>=2.0
