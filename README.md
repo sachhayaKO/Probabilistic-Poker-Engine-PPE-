@@ -19,12 +19,18 @@ PPE combines:
 | ML | PyTorch |
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS |
 
+## Prerequisites
+
+- Python 3.11+
+- Node 20+
+
 ## Running locally
 
 **Backend**
 
 ```bash
 # From repo root
+pip install -e ".[dev]"
 uvicorn backend.app.main:app --reload
 ```
 
@@ -40,6 +46,27 @@ npm run dev
 
 UI is available at `http://localhost:5173`.
 
+## Running tests
+
+```bash
+# pyproject.toml sets testpaths = ["backend/tests", "engine/tests"] automatically
+pytest
+```
+
+## Bot modes
+
+| Mode | Description |
+|------|-------------|
+| `random` | Uniform action sampling — fold/call/raise with equal probability |
+| `cheat` | Perfect-information Monte Carlo: sees both hole cards, runs 300 rollouts to pick the highest-EV action |
+| `ppo` | PPO-trained neural agent — loads `scripts/checkpoints/checkpoint_latest.pt`; **falls back to random if no checkpoint exists**. Run `python scripts/train_self_play.py` first to generate one. |
+
+## ML pipeline
+
+- **State encoding**: `GameStateEncoder` produces 30-dimensional state vectors from raw game state
+- **Model**: `PPEActorCritic` — shared-trunk actor-critic network (policy head + value head)
+- **Training**: `python scripts/train_self_play.py` — runs self-play PPO and saves checkpoints to `scripts/checkpoints/`
+
 ## Project structure
 
 ```
@@ -50,29 +77,3 @@ scripts/      Self-play PPO training (train_self_play.py) and utility scripts
 scripts/checkpoints/  PPO checkpoint storage (checkpoint_latest.pt loaded at runtime)
 docs/         Architecture, API contract, state representation, and decision log
 ```
-
-## Running tests
-
-```bash
-# Short form — pyproject.toml sets testpaths automatically
-pytest
-
-# Equivalent explicit form
-pytest backend/tests/ engine/tests/ -v
-```
-
-## Bot modes
-
-| Mode | Description |
-|------|-------------|
-| `random` | Uniform action sampling — fold/call/raise with equal probability |
-| `cheat` | Perfect-information Monte Carlo: sees both hole cards, runs 300 rollouts to pick the highest-EV action |
-| `ppo` | PPO-trained neural agent — loads checkpoint from `scripts/checkpoints/checkpoint_latest.pt`; falls back to random if no checkpoint exists |
-
-## ML pipeline
-
-- **State encoding**: `GameStateEncoder` produces 30-dimensional state vectors from raw game state
-- **Model**: `PPEActorCritic` — shared-trunk actor-critic network (policy head + value head)
-- **Training**: self-play PPO via `python scripts/train_self_play.py`
-
-Checkpoints are saved to `scripts/checkpoints/`. The backend loads `checkpoint_latest.pt` at startup when `difficulty=ppo` is selected.
