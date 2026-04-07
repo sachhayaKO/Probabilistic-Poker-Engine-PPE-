@@ -138,6 +138,13 @@ def apply_action(
     if len(state.betting_history) % 2 == 0:
         advance_street(state)
 
+    # All-in guard: if both stacks are 0 and we haven't reached showdown yet,
+    # fast-forward through remaining streets to prevent infinite loops in
+    # self-play training where legal_actions would keep returning non-empty lists.
+    if all(v == 0 for v in state.stacks.values()) and state.street != "showdown":
+        while state.street != "showdown":
+            advance_street(state)
+
     return state
 
 
