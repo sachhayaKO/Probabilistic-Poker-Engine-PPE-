@@ -12,10 +12,16 @@ dependencies = [
   "fastapi",
   "uvicorn",
   "pydantic",
-  "pytest",
-  "httpx",
   "psycopg[binary]",
   "torch>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "httpx",
+  "anyio[trio]",
+  "pytest-anyio",
 ]
 
 [tool.pytest.ini_options]
