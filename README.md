@@ -1,14 +1,15 @@
 # Probabilistic Poker Engine (PPE)
 
-A fully functional heads-up Texas Hold'em ML research platform. Play against bots ranging from random to a PPO-trained neural agent, while the engine computes real-time Monte Carlo equity estimates.
+A fully functional heads-up Texas Hold'em ML research platform. Play multi-hand sessions against bots ranging from random to a PPO-trained neural agent, while the engine computes real-time Monte Carlo equity estimates.
 
 ## What it is
 
 PPE combines:
 - A pure-Python poker engine with Monte Carlo equity estimation
-- A FastAPI backend managing game state and bot logic
+- A FastAPI backend managing game state and bot logic across multiple hands
 - A React/TypeScript/Tailwind frontend for human vs. bot play
 - Three bot difficulties: random, cheat bot (perfect-information MC), and a PPO-trained agent
+- Multi-hand sessions: chip stacks persist across hands and play continues until one player busts
 - A self-play PPO training pipeline for iterating on the ML opponent
 
 ## Stack
@@ -53,6 +54,13 @@ UI is available at `http://localhost:5173`.
 pytest
 ```
 
+## Gameplay
+
+- Sessions run until one player reaches 0 chips — not just one hand
+- After each hand, the pot is awarded to the winner and a new hand starts automatically with the updated stacks
+- A brief transition message appears between hands; the full Game Over screen with final chip counts only shows when a player busts
+- Raise sizing uses standard poker presets (¼ Pot, ½ Pot, ¾ Pot, 1× Pot, 2× Pot, All-In) plus a manual slider for custom amounts; all values are clamped to `[big_blind, player_stack]`
+
 ## Bot modes
 
 | Mode | Description |
@@ -66,6 +74,16 @@ pytest
 - **State encoding**: `GameStateEncoder` produces 30-dimensional state vectors from raw game state
 - **Model**: `PPEActorCritic` — shared-trunk actor-critic network (policy head + value head)
 - **Training**: `python scripts/train_self_play.py` — runs self-play PPO and saves checkpoints to `scripts/checkpoints/`
+
+## API
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/start_game` | POST | Start a new session; returns initial hand state with `hand_number: 1` |
+| `/action` | POST | Submit a player action; auto-starts next hand on winner if stacks allow |
+| `/game_state/{game_id}` | GET | Fetch current state (used by frontend after the between-hands pause) |
+
+`GameStateResponse` includes `session_over: bool` (true only when a player busts) and `hand_number: int` (increments each hand).
 
 ## Project structure
 
