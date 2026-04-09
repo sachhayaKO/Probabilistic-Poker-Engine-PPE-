@@ -104,6 +104,7 @@ export function GameTable({
           toAct={gameState.to_act}
           playerStack={gameState.player_stack}
           bigBlind={bigBlind}
+          pot={gameState.pot}
           botThinking={botThinking}
           onAction={onAction}
         />
