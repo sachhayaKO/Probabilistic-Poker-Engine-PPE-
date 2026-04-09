@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react"
 import type { GameState, MoveLogEntry, Screen, Settings } from "./types"
-import { postAction } from "./api"
+import { postAction, getGameState } from "./api"
 import { WelcomeScreen } from "./components/WelcomeScreen"
 import { SettingsScreen } from "./components/SettingsScreen"
 import { GameTable } from "./components/GameTable"
@@ -71,6 +71,18 @@ export default function App() {
 
         setMoveLog((prev) => [...prev, ...newEntries])
         setGameState(newState)
+
+        // Between hands: winner set but session not over — fetch the auto-started next hand
+        if (newState.winner !== null && !newState.session_over) {
+          setTimeout(async () => {
+            try {
+              const nextHand = await getGameState(newState.game_id)
+              setGameState(nextHand)
+            } catch {
+              // ignore — user can still see the hand result
+            }
+          }, 2000)
+        }
       } catch {
         setError("Action failed — please try again.")
       } finally {

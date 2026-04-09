@@ -23,7 +23,8 @@ export function GameTable({
   onPlayAgain,
   onMenu,
 }: GameTableProps) {
-  const isGameOver = gameState.winner !== null
+  const isSessionOver = gameState.session_over
+  const isBetweenHands = gameState.winner !== null && !gameState.session_over
   const isShowdown = gameState.street === "showdown"
 
   const winnerLabel =
@@ -113,11 +114,37 @@ export function GameTable({
         <MoveLog entries={moveLog} />
       </div>
 
-      {/* ── Game-over overlay ── */}
-      {isGameOver && (
+      {/* ── Between-hands transition overlay ── */}
+      {isBetweenHands && (
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="text-center space-y-3">
+            <div className={`text-2xl font-bold ${winnerColor}`}>{winnerLabel}</div>
+            <div className="text-sm font-mono text-slate-400 animate-pulse">
+              Hand {gameState.hand_number - 1} over — next hand starting…
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Game-over overlay (session over) ── */}
+      {isSessionOver && (
         <div className="absolute inset-0 bg-black/75 flex items-center justify-center z-50">
           <div className="card text-center space-y-5 max-w-sm w-full mx-4">
+            <div className="text-xs font-mono text-slate-500 uppercase tracking-widest">
+              Game Over
+            </div>
             <div className={`text-3xl font-bold ${winnerColor}`}>{winnerLabel}</div>
+
+            <div className="flex justify-center gap-8 text-sm font-mono">
+              <div className="text-center">
+                <div className="text-slate-500 mb-1">You</div>
+                <div className="text-red-400 font-bold text-lg">{gameState.player_stack}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-slate-500 mb-1">Bot</div>
+                <div className="text-slate-300 font-bold text-lg">{gameState.bot_stack}</div>
+              </div>
+            </div>
 
             {isShowdown && gameState.villain_hand.length === 2 && (
               <div className="space-y-3">
