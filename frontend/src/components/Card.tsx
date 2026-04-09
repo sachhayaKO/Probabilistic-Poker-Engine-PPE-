@@ -48,24 +48,20 @@ export function Card({ card, faceDown = false, index = 0 }: CardProps) {
 
   return (
     <div
-      className={`${base} border border-slate-300 bg-white flex flex-col justify-between p-1.5 select-none`}
+      className={`${base} border border-slate-300 bg-white flex flex-col justify-between p-1.5 select-none overflow-hidden`}
     >
-      <div className="text-xs font-bold font-mono leading-tight" style={{ color }}>
-        {rank}
-        <br />
+      <span className="text-[10px] font-bold font-mono leading-none" style={{ color }}>
+        {rank}{symbol}
+      </span>
+      <div className="text-center text-lg leading-none" style={{ color }}>
         {symbol}
       </div>
-      <div className="text-center text-base leading-none" style={{ color }}>
-        {symbol}
-      </div>
-      <div
-        className="text-xs font-bold font-mono leading-tight text-right rotate-180"
+      <span
+        className="text-[10px] font-bold font-mono leading-none text-right rotate-180"
         style={{ color }}
       >
-        {rank}
-        <br />
-        {symbol}
-      </div>
+        {rank}{symbol}
+      </span>
     </div>
   )
 }
