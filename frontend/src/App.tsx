@@ -11,12 +11,14 @@ export default function App() {
   const [moveLog, setMoveLog] = useState<MoveLogEntry[]>([])
   const [botThinking, setBotThinking] = useState(false)
   const [bigBlind, setBigBlind] = useState(10)
+  const [startingStack, setStartingStack] = useState(1000)
   const [error, setError] = useState<string | null>(null)
 
   function handleGameStart(state: GameState, settings: Settings) {
     setGameState(state)
     setMoveLog([])
     setBigBlind(settings.big_blind)
+    setStartingStack(settings.stack_size)
     setBotThinking(false)
     setError(null)
     setScreen("game")
@@ -121,6 +123,7 @@ export default function App() {
           moveLog={moveLog}
           botThinking={botThinking}
           bigBlind={bigBlind}
+          startingStack={startingStack}
           onAction={handleAction}
           onPlayAgain={() => setScreen("settings")}
           onMenu={() => setScreen("welcome")}

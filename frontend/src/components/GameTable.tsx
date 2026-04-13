@@ -9,6 +9,7 @@ interface GameTableProps {
   moveLog: MoveLogEntry[]
   botThinking: boolean
   bigBlind: number
+  startingStack: number
   onAction: (action: string, amount: number | null) => void
   onPlayAgain: () => void
   onMenu: () => void
@@ -19,6 +20,7 @@ export function GameTable({
   moveLog,
   botThinking,
   bigBlind,
+  startingStack,
   onAction,
   onPlayAgain,
   onMenu,
@@ -26,6 +28,25 @@ export function GameTable({
   const isSessionOver = gameState.session_over
   const isBetweenHands = gameState.winner !== null && !gameState.session_over
   const isShowdown = gameState.street === "showdown"
+
+  const stackDelta = gameState.player_stack - startingStack
+  const deltaLabel =
+    stackDelta > 0 ? `+${stackDelta}` : stackDelta < 0 ? `${stackDelta}` : "+0"
+  const deltaColor =
+    stackDelta > 0 ? "text-green-400" : stackDelta < 0 ? "text-red-400" : "text-slate-500"
+
+  const handChipLabel =
+    gameState.winner === "hero"
+      ? `+${gameState.pot}`
+      : gameState.winner === "villain"
+      ? `-${gameState.pot}`
+      : "+0"
+  const handChipColor =
+    gameState.winner === "hero"
+      ? "text-green-400"
+      : gameState.winner === "villain"
+      ? "text-red-400"
+      : "text-amber-400"
 
   const winnerLabel =
     gameState.winner === "hero"
@@ -45,6 +66,16 @@ export function GameTable({
     <div className="min-h-screen bg-black flex relative">
       {/* ── Main table ── */}
       <div className="flex-1 flex flex-col min-h-screen">
+        {/* Session header: hand counter + chip delta */}
+        <div className="flex items-center justify-between px-4 py-1.5 border-b border-red-900/10 bg-black/40">
+          <span className="text-xs font-mono text-slate-500">
+            Hand #{gameState.hand_number}
+          </span>
+          <span className={`text-xs font-mono ${deltaColor}`}>
+            You: {deltaLabel}
+          </span>
+        </div>
+
         {/* Bot area */}
         <div className="flex items-center justify-center gap-6 py-6 px-4 border-b border-red-900/20">
           <div className="text-center min-w-[4rem]">
@@ -120,8 +151,9 @@ export function GameTable({
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="text-center space-y-3">
             <div className={`text-2xl font-bold ${winnerColor}`}>{winnerLabel}</div>
-            <div className="text-sm font-mono text-slate-400 animate-pulse">
-              Hand {gameState.hand_number - 1} over — next hand starting…
+            <div className={`text-xl font-mono font-bold ${handChipColor}`}>{handChipLabel}</div>
+            <div className="text-xs font-mono text-slate-500 animate-pulse">
+              Hand {gameState.hand_number - 1} of session — next hand starting…
             </div>
           </div>
         </div>
