@@ -39,6 +39,72 @@ export function ActionPanel({
     setActivePreset(null)
   }, [bigBlind, street])
 
+  useEffect(() => {
+    if (disabled) return
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((document.activeElement as HTMLElement)?.tagName === "INPUT") return
+
+      const clampCurrent = (v: number) => Math.min(Math.max(v, bigBlind), playerStack)
+
+      switch (e.key) {
+        case "f":
+        case "F":
+          if (legalActions.includes("fold")) {
+            setShowRaise(false)
+            onAction("fold", null)
+          }
+          break
+        case "c":
+        case "C":
+          if (legalActions.includes("check")) {
+            setShowRaise(false)
+            onAction("check", null)
+          } else if (legalActions.includes("call")) {
+            setShowRaise(false)
+            onAction("call", null)
+          }
+          break
+        case "r":
+        case "R":
+          if (legalActions.includes("raise") && !showRaise) {
+            setShowRaise(true)
+          }
+          break
+        case "Enter":
+          if (showRaise) {
+            setShowRaise(false)
+            setActivePreset(null)
+            onAction("raise", raiseAmount)
+          }
+          break
+        case "Escape":
+          if (showRaise) {
+            setShowRaise(false)
+            setActivePreset(null)
+          }
+          break
+        case "ArrowUp":
+          if (showRaise) {
+            e.preventDefault()
+            setRaiseAmount((prev) => clampCurrent(prev + bigBlind))
+            setActivePreset(null)
+          }
+          break
+        case "ArrowDown":
+          if (showRaise) {
+            e.preventDefault()
+            setRaiseAmount((prev) => clampCurrent(prev - bigBlind))
+            setActivePreset(null)
+          }
+          break
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [disabled, legalActions, showRaise, raiseAmount, bigBlind, playerStack, onAction])
+
   const isPlayerTurn = toAct === "hero"
   const disabled = !isPlayerTurn || botThinking || street === "showdown"
 
@@ -144,27 +210,37 @@ export function ActionPanel({
           </div>
         </div>
       ) : (
-        <div className="flex gap-2">
-          {(["fold", "check", "call", "raise"] as const).map((act) => {
-            const available = legalActions.includes(act)
-            const isRaise = act === "raise"
-            return (
-              <button
-                key={act}
-                onClick={() => handleActionClick(act)}
-                disabled={disabled || !available}
-                className={`flex-1 py-2.5 rounded-lg text-sm font-mono font-semibold uppercase tracking-wide transition-all
-                  ${
-                    isRaise
-                      ? "bg-red-600 hover:bg-red-700 text-white border border-red-500"
-                      : "bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700"
-                  }
-                  disabled:opacity-30 disabled:cursor-not-allowed`}
-              >
-                {act}
-              </button>
-            )
-          })}
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            {(["fold", "check", "call", "raise"] as const).map((act) => {
+              const available = legalActions.includes(act)
+              const isRaise = act === "raise"
+              return (
+                <button
+                  key={act}
+                  onClick={() => handleActionClick(act)}
+                  disabled={disabled || !available}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-mono font-semibold uppercase tracking-wide transition-all
+                    ${
+                      isRaise
+                        ? "bg-red-600 hover:bg-red-700 text-white border border-red-500"
+                        : "bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700"
+                    }
+                    disabled:opacity-30 disabled:cursor-not-allowed`}
+                >
+                  {act}
+                </button>
+              )
+            })}
+          </div>
+          {isPlayerTurn && !botThinking && street !== "showdown" && (
+            <div className="flex gap-2 text-[10px] font-mono text-slate-600">
+              <span className="flex-1 text-center">[F] Fold</span>
+              <span className="flex-1 text-center">[C] Check/Call</span>
+              <span className="flex-1 text-center">[R] Raise</span>
+              <span className="flex-1" />
+            </div>
+          )}
         </div>
       )}
     </div>
