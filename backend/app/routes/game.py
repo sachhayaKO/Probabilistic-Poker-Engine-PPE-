@@ -127,7 +127,7 @@ def _cheat_bot_action(state: GameState, big_blind: int) -> tuple[str, int | None
     n_board_needed = 5 - len(board)
     rng = stdlib_random.Random()
     wins = 0.0
-    n = 300
+    n = 150
     for _ in range(n):
         sample = rng.sample(unknown, n_board_needed)
         full_board = board + sample
