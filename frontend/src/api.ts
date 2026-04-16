@@ -1,6 +1,6 @@
 import type { GameState, Settings } from "./types"
 
-const BASE = "http://localhost:8000"
+const BASE = import.meta.env.VITE_API_BASE_URL ?? ""
 
 export async function startGame(settings: Settings): Promise<GameState> {
   const seedNum = settings.seed ? parseInt(settings.seed, 10) : null
