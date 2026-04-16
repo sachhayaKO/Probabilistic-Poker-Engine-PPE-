@@ -5,6 +5,7 @@ Game routes: start_game, game_state, and action.
 """
 
 import random as stdlib_random
+from functools import lru_cache
 
 from fastapi import APIRouter, HTTPException
 
@@ -19,6 +20,13 @@ from engine.poker.ml.equity import run_equity_estimate
 from engine.poker.state import GameState
 
 router = APIRouter(tags=["game"])
+
+
+@lru_cache(maxsize=256)
+def _cached_equity(hole_tuple: tuple[str, ...], board_tuple: tuple[str, ...]) -> float:
+    hole = [Card.from_str(c) for c in hole_tuple]
+    board = [Card.from_str(c) for c in board_tuple]
+    return run_equity_estimate(hole, board, n_simulations=200)
 
 
 # ── Deck helpers ──────────────────────────────────────────────────────────────
@@ -252,7 +260,10 @@ def start_game(payload: StartGameRequest) -> GameStateResponse:
 
     save_game_state(state_dict)
 
-    hero_equity = run_equity_estimate(state.hands["hero"], state.board, n_simulations=200)
+    hero_equity = _cached_equity(
+        tuple(c.to_str() for c in state.hands["hero"]),
+        tuple(c.to_str() for c in state.board),
+    )
 
     return _to_game_state_response(
         state_dict,
@@ -275,7 +286,10 @@ def game_state(game_id: str) -> GameStateResponse:
 
     if state_dict.get("street") != "showdown" and winner is None:
         state = _reconstruct_game_state(state_dict)
-        hero_equity = run_equity_estimate(state.hands["hero"], state.board, n_simulations=200)
+        hero_equity = _cached_equity(
+        tuple(c.to_str() for c in state.hands["hero"]),
+        tuple(c.to_str() for c in state.board),
+    )
 
     return _to_game_state_response(
         state_dict,
@@ -327,7 +341,10 @@ def action(payload: ActionRequest) -> GameStateResponse:
     # Compute hero equity (only during live non-showdown play)
     hero_equity: float | None = None
     if winner is None and state.street != "showdown":
-        hero_equity = run_equity_estimate(state.hands["hero"], state.board, n_simulations=200)
+        hero_equity = _cached_equity(
+        tuple(c.to_str() for c in state.hands["hero"]),
+        tuple(c.to_str() for c in state.board),
+    )
 
     # Persist updated state
     new_dict = state.to_dict()
