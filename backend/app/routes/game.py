@@ -252,7 +252,7 @@ def start_game(payload: StartGameRequest) -> GameStateResponse:
 
     save_game_state(state_dict)
 
-    hero_equity = run_equity_estimate(state.hands["hero"], state.board)
+    hero_equity = run_equity_estimate(state.hands["hero"], state.board, n_simulations=200)
 
     return _to_game_state_response(
         state_dict,
@@ -275,7 +275,7 @@ def game_state(game_id: str) -> GameStateResponse:
 
     if state_dict.get("street") != "showdown" and winner is None:
         state = _reconstruct_game_state(state_dict)
-        hero_equity = run_equity_estimate(state.hands["hero"], state.board)
+        hero_equity = run_equity_estimate(state.hands["hero"], state.board, n_simulations=200)
 
     return _to_game_state_response(
         state_dict,
@@ -327,7 +327,7 @@ def action(payload: ActionRequest) -> GameStateResponse:
     # Compute hero equity (only during live non-showdown play)
     hero_equity: float | None = None
     if winner is None and state.street != "showdown":
-        hero_equity = run_equity_estimate(state.hands["hero"], state.board)
+        hero_equity = run_equity_estimate(state.hands["hero"], state.board, n_simulations=200)
 
     # Persist updated state
     new_dict = state.to_dict()
