@@ -4,7 +4,9 @@ from __future__ import annotations
 Game routes: start_game, game_state, and action.
 """
 
+import asyncio
 import random as stdlib_random
+from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 
 from fastapi import APIRouter, HTTPException
@@ -20,6 +22,8 @@ from engine.poker.ml.equity import run_equity_estimate
 from engine.poker.state import GameState
 
 router = APIRouter(tags=["game"])
+
+_EQUITY_EXECUTOR = ThreadPoolExecutor(max_workers=2)
 
 
 @lru_cache(maxsize=256)
@@ -243,7 +247,7 @@ def _to_game_state_response(
 
 
 @router.post("/start_game", response_model=GameStateResponse)
-def start_game(payload: StartGameRequest) -> GameStateResponse:
+async def start_game(payload: StartGameRequest) -> GameStateResponse:
     state = new_game(
         stack_size=payload.stack_size,
         small_blind=payload.small_blind,
@@ -260,9 +264,13 @@ def start_game(payload: StartGameRequest) -> GameStateResponse:
 
     save_game_state(state_dict)
 
-    hero_equity = _cached_equity(
-        tuple(c.to_str() for c in state.hands["hero"]),
-        tuple(c.to_str() for c in state.board),
+    loop = asyncio.get_event_loop()
+    hero_equity = await loop.run_in_executor(
+        _EQUITY_EXECUTOR,
+        lambda: _cached_equity(
+            tuple(c.to_str() for c in state.hands["hero"]),
+            tuple(c.to_str() for c in state.board),
+        ),
     )
 
     return _to_game_state_response(
@@ -274,7 +282,7 @@ def start_game(payload: StartGameRequest) -> GameStateResponse:
 
 
 @router.get("/game_state/{game_id}", response_model=GameStateResponse)
-def game_state(game_id: str) -> GameStateResponse:
+async def game_state(game_id: str) -> GameStateResponse:
     state_dict = load_game_state(game_id)
     if state_dict is None:
         raise HTTPException(status_code=404, detail="game not found")
@@ -286,10 +294,14 @@ def game_state(game_id: str) -> GameStateResponse:
 
     if state_dict.get("street") != "showdown" and winner is None:
         state = _reconstruct_game_state(state_dict)
-        hero_equity = _cached_equity(
-        tuple(c.to_str() for c in state.hands["hero"]),
-        tuple(c.to_str() for c in state.board),
-    )
+        loop = asyncio.get_event_loop()
+        hero_equity = await loop.run_in_executor(
+            _EQUITY_EXECUTOR,
+            lambda: _cached_equity(
+                tuple(c.to_str() for c in state.hands["hero"]),
+                tuple(c.to_str() for c in state.board),
+            ),
+        )
 
     return _to_game_state_response(
         state_dict,
@@ -300,7 +312,7 @@ def game_state(game_id: str) -> GameStateResponse:
 
 
 @router.post("/action", response_model=GameStateResponse)
-def action(payload: ActionRequest) -> GameStateResponse:
+async def action(payload: ActionRequest) -> GameStateResponse:
     state_dict = load_game_state(payload.game_id)
     if state_dict is None:
         raise HTTPException(status_code=404, detail="game not found")
@@ -341,10 +353,14 @@ def action(payload: ActionRequest) -> GameStateResponse:
     # Compute hero equity (only during live non-showdown play)
     hero_equity: float | None = None
     if winner is None and state.street != "showdown":
-        hero_equity = _cached_equity(
-        tuple(c.to_str() for c in state.hands["hero"]),
-        tuple(c.to_str() for c in state.board),
-    )
+        loop = asyncio.get_event_loop()
+        hero_equity = await loop.run_in_executor(
+            _EQUITY_EXECUTOR,
+            lambda: _cached_equity(
+                tuple(c.to_str() for c in state.hands["hero"]),
+                tuple(c.to_str() for c in state.board),
+            ),
+        )
 
     # Persist updated state
     new_dict = state.to_dict()
