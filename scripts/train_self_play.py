@@ -24,6 +24,7 @@ Logging is emitted every 100 episodes; checkpoints are saved to
 from __future__ import annotations
 
 import logging
+import shutil
 import sys
 from pathlib import Path
 from typing import NamedTuple
@@ -460,6 +461,8 @@ def train(n_episodes: int = N_EPISODES) -> None:
                 },
                 ckpt_path,
             )
+            latest_path = CHECKPOINT_DIR / "checkpoint_latest.pt"
+            shutil.copy2(ckpt_path, latest_path)
             log.info("checkpoint saved → %s", ckpt_path)
 
     log.info("training complete (%d episodes)", n_episodes)

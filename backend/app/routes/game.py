@@ -11,6 +11,7 @@ from functools import lru_cache
 
 from fastapi import APIRouter, HTTPException
 
+from backend.app.core.logging import get_logger
 from backend.app.schemas.game import ActionRequest, GameStateResponse, StartGameRequest
 from backend.app.storage import load_game_state, save_game_state
 from engine.poker.cards import Card, Deck, RANKS, SUITS
@@ -20,6 +21,8 @@ from engine.poker.game import legal_actions as get_legal_actions
 from engine.poker.game import new_game
 from engine.poker.ml.equity import run_equity_estimate
 from engine.poker.state import GameState
+
+logger = get_logger(__name__)
 
 router = APIRouter(tags=["game"])
 
@@ -178,6 +181,8 @@ def _to_game_state_response(
     villain_hand: list[str] | None = None,
     hero_equity: float | None = None,
     winner: str | None = None,
+    session_over: bool = False,
+    hand_number: int = 1,
 ) -> GameStateResponse:
     hands = state_dict.get("hands", {})
     if not isinstance(hands, dict):
@@ -240,6 +245,8 @@ def _to_game_state_response(
         legal_actions=legal_actions_list,
         hero_equity=hero_equity,
         winner=resolved_winner,
+        session_over=session_over,
+        hand_number=hand_number,
     )
 
 
@@ -261,6 +268,7 @@ async def start_game(payload: StartGameRequest) -> GameStateResponse:
     state_dict["big_blind"] = payload.big_blind
     state_dict["small_blind"] = payload.small_blind
     state_dict["legal_actions"] = get_legal_actions(state)
+    state_dict["hand_number"] = 1
 
     save_game_state(state_dict)
 
@@ -278,6 +286,8 @@ async def start_game(payload: StartGameRequest) -> GameStateResponse:
         villain_hand=[],
         hero_equity=hero_equity,
         winner=None,
+        session_over=False,
+        hand_number=1,
     )
 
 
@@ -290,7 +300,12 @@ async def game_state(game_id: str) -> GameStateResponse:
     villain_hand: list[str] = list(state_dict.get("villain_hand", []))  # type: ignore[arg-type]
     stored_winner = state_dict.get("winner")
     winner = str(stored_winner) if stored_winner else None
+    session_over = bool(state_dict.get("session_over", False))
+    hand_number = int(state_dict.get("hand_number", 1))  # type: ignore[arg-type]
     hero_equity: float | None = None
+
+    if winner is not None:
+        state_dict["legal_actions"] = []
 
     if state_dict.get("street") != "showdown" and winner is None:
         state = _reconstruct_game_state(state_dict)
@@ -308,6 +323,8 @@ async def game_state(game_id: str) -> GameStateResponse:
         villain_hand=villain_hand,
         hero_equity=hero_equity,
         winner=winner,
+        session_over=session_over,
+        hand_number=hand_number,
     )
 
 
@@ -339,7 +356,8 @@ async def action(payload: ActionRequest) -> GameStateResponse:
             bot_action, bot_amount = _get_bot_action(state, difficulty, big_blind)
             try:
                 apply_action(state, "villain", bot_action, bot_amount)
-            except ValueError:
+            except ValueError as exc:
+                logger.warning("bot action %s failed (%s), falling back to check", bot_action, exc)
                 bot_action, bot_amount = "check", None
                 apply_action(state, "villain", bot_action, bot_amount)
             if bot_action == "fold":
@@ -362,24 +380,86 @@ async def action(payload: ActionRequest) -> GameStateResponse:
             ),
         )
 
-    # Persist updated state
+    # Build base state dict
     new_dict = state.to_dict()
     new_dict["deck_cards"] = _serialize_deck(state.deck)
     new_dict["difficulty"] = difficulty
     new_dict["big_blind"] = big_blind
-    new_dict["small_blind"] = int(state_dict.get("small_blind", 5))
+    small_blind = int(state_dict.get("small_blind", 5))
+    new_dict["small_blind"] = small_blind
     new_dict["legal_actions"] = get_legal_actions(state)
-    if winner is not None:
-        new_dict["legal_actions"] = []
-        new_dict["winner"] = winner
+    current_hand_number = int(state_dict.get("hand_number", 1))  # type: ignore[arg-type]
+
+    # No winner yet — persist mid-hand state and return
+    if winner is None:
+        new_dict["hand_number"] = current_hand_number
+        save_game_state(new_dict)
+        return _to_game_state_response(
+            new_dict,
+            villain_hand=None,
+            hero_equity=hero_equity,
+            winner=None,
+            session_over=False,
+            hand_number=current_hand_number,
+        )
+
+    # Winner determined — award pot and decide continuation
     if villain_hand:
         new_dict["villain_hand"] = villain_hand
 
-    save_game_state(new_dict)
+    if winner == "hero":
+        new_hero_stack = state.stacks["hero"] + state.pot
+        new_villain_stack = state.stacks["villain"]
+    elif winner == "villain":
+        new_hero_stack = state.stacks["hero"]
+        new_villain_stack = state.stacks["villain"] + state.pot
+    else:  # tie
+        half = state.pot // 2
+        new_hero_stack = state.stacks["hero"] + half
+        new_villain_stack = state.stacks["villain"] + (state.pot - half)
 
+    session_over = new_hero_stack <= 0 or new_villain_stack <= 0
+
+    if session_over:
+        new_dict["stacks"] = {"hero": new_hero_stack, "villain": new_villain_stack}
+        new_dict["winner"] = winner
+        new_dict["session_over"] = True
+        new_dict["hand_number"] = current_hand_number
+        new_dict["legal_actions"] = []
+        save_game_state(new_dict)
+        return _to_game_state_response(
+            new_dict,
+            villain_hand=villain_hand if villain_hand else None,
+            hero_equity=None,
+            winner=winner,
+            session_over=True,
+            hand_number=current_hand_number,
+        )
+
+    # Auto-start the next hand with carried-over stacks
+    next_hand_number = current_hand_number + 1
+    next_state = new_game(small_blind=small_blind, big_blind=big_blind)
+    next_state.stacks["hero"] = new_hero_stack
+    next_state.stacks["villain"] = new_villain_stack
+    next_state.game_id = payload.game_id  # keep same game_id so frontend can fetch it
+
+    next_dict = next_state.to_dict()
+    next_dict["deck_cards"] = _serialize_deck(next_state.deck)
+    next_dict["difficulty"] = difficulty
+    next_dict["big_blind"] = big_blind
+    next_dict["small_blind"] = small_blind
+    next_dict["hand_number"] = next_hand_number
+    next_dict["legal_actions"] = get_legal_actions(next_state)
+    save_game_state(next_dict)
+
+    # Return the just-finished hand's result so the frontend can display it briefly
+    new_dict["stacks"] = {"hero": new_hero_stack, "villain": new_villain_stack}
+    new_dict["legal_actions"] = []
     return _to_game_state_response(
         new_dict,
         villain_hand=villain_hand if villain_hand else None,
-        hero_equity=hero_equity,
+        hero_equity=None,
         winner=winner,
+        session_over=False,
+        hand_number=next_hand_number,
     )

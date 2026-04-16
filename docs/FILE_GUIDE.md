@@ -19,11 +19,11 @@ This guide explains what each file currently does, how files connect, and what P
 - Registers `GET /health` and includes game router.
 
 ### `backend/app/routes/game.py`
-- Defines `/game` routes:
-  - `POST /game/new`
-  - `POST /game/action`
-  - `GET /game/state/{game_id}`
-- Uses persistent storage helpers (`save_game`, `load_game`, `save_action`) rather than process-local state.
+- Defines game routes:
+  - `POST /start_game`
+  - `POST /action`
+  - `GET /game_state/{game_id}`
+- Uses in-memory storage helpers (`save_game_state`, `load_game_state`) from `backend.app.storage`.
 - Calls engine APIs (`new_game`, `apply_action`, `legal_actions`) from `engine.poker`.
 - Maps engine `ValueError` to HTTP 400.
 
@@ -42,14 +42,14 @@ This guide explains what each file currently does, how files connect, and what P
 - Centralized logging setup and logger retrieval.
 
 ### `backend/app/storage/db.py`
-- Database adapter layer with a shared API for SQLite and PostgreSQL.
-- CRUD-style helpers for game snapshots and action events.
-- Uses `PPE_DATABASE_URL` (`sqlite:///...` default; `postgresql+psycopg://...` supported).
-- `reset_db` helper for test isolation.
+- Pure in-memory storage: `game_store: dict[str, dict[str, object]]` module-level dict.
+- `save_game_state(state_dict)`: upsert by `game_id`.
+- `load_game_state(game_id)`: returns dict or `None`.
+- `reset_db()`: clears the dict for test isolation.
+- `init_db()`: no-op compatibility hook called at app startup.
 
 ### `backend/app/storage/models.py`
 - Serialization/deserialization between `GameState` and storage JSON payloads.
-- `ActionRecord` storage model for action history rows.
 
 ## Engine (`engine/poker`)
 
@@ -69,13 +69,76 @@ This guide explains what each file currently does, how files connect, and what P
   - `legal_actions(...)`
 
 ### `engine/poker/evaluator.py`
-- Evaluator interface placeholder (`NotImplementedError`).
+- Custom pure-Python hand evaluator using `itertools.combinations`.
+- Returns a numeric score for a 5–7 card list.
 
 ### `engine/poker/betting.py`
-- Betting logic placeholder.
+- Betting round logic: blind posting, action sequencing, street transitions.
 
 ### `engine/poker/__init__.py`
 - Re-export module API (`Card`, `Deck`, `GameState`, `new_game`, `apply_action`, `legal_actions`).
+
+### `engine/poker/ml/__init__.py`
+- Package marker for the ML sub-module.
+
+### `engine/poker/ml/agent.py`
+- `BotAgent`: loads a PPO checkpoint and exposes `act(state) -> (action, amount)`.
+
+### `engine/poker/ml/equity.py`
+- `run_equity_estimate(hole_cards, board)`: Monte Carlo equity estimate for the hero's hand.
+
+### `engine/poker/ml/model.py`
+- `PPEActorCritic`: shared-trunk actor-critic network (policy head + value head) implemented in PyTorch.
+
+### `engine/poker/ml/state_encoder.py`
+- `GameStateEncoder`: converts a `GameState` to a 30-dimensional float vector for model input.
+
+## Scripts (`scripts/`)
+
+### `scripts/train_self_play.py`
+- Self-play PPO training loop.
+- Saves numbered checkpoints and `scripts/checkpoints/checkpoint_latest.pt`.
+
+### `scripts/run_monte_carlo.py`
+- Standalone Monte Carlo equity runner for hand analysis.
+
+### `scripts/simulate_self_play.py`
+- Simulates games between two bot policies for benchmarking.
+
+## Frontend (`frontend/src/`)
+
+### `frontend/src/main.tsx`
+- React app entry point; mounts `<App />` into the DOM.
+
+### `frontend/src/App.tsx`
+- Top-level component; manages screen routing (welcome → game).
+
+### `frontend/src/api.ts`
+- Typed fetch wrappers for all backend endpoints (`startGame`, `getGameState`, `postAction`).
+
+### `frontend/src/types.ts`
+- TypeScript types mirroring the Pydantic response schemas.
+
+### `frontend/src/index.css`
+- Tailwind CSS base styles.
+
+### `frontend/src/components/WelcomeScreen.tsx`
+- Difficulty selector and game start UI.
+
+### `frontend/src/components/SettingsScreen.tsx`
+- Game configuration form (stack size, blinds, seed).
+
+### `frontend/src/components/GameTable.tsx`
+- Main game board: board cards, pot, stacks, and bot hand reveal at showdown.
+
+### `frontend/src/components/ActionPanel.tsx`
+- Hero action buttons; shows only legal actions for the current state.
+
+### `frontend/src/components/Card.tsx`
+- Renders a single playing card with rank/suit styling.
+
+### `frontend/src/components/MoveLog.tsx`
+- Scrollable history of betting actions.
 
 ## Tests
 
@@ -100,12 +163,12 @@ This guide explains what each file currently does, how files connect, and what P
 
 ## Interaction map (current runtime path)
 
-1. Client calls backend endpoint.
+1. Client calls backend endpoint (`/start_game`, `/action`, or `/game_state/{game_id}`).
 2. FastAPI validates payload with Pydantic schema.
-3. Route loads current game state from configured SQLite/PostgreSQL backend.
-4. Route calls engine function to mutate/advance state.
-5. Route persists updated game snapshot and action record.
-6. Route returns normalized `GameResponse` payload.
+3. Route calls `load_game_state(game_id)` to read from the in-memory `game_store` dict.
+4. Route calls engine function (`new_game`, `apply_action`, `legal_actions`) to mutate/advance state.
+5. Route calls `save_game_state(state_dict)` to persist the updated snapshot in `game_store`.
+6. Route returns a `GameStateResponse` payload.
 
 ## Python + framework APIs used (learning notes)
 
@@ -121,10 +184,10 @@ This guide explains what each file currently does, how files connect, and what P
 - `Field(gt=0)`: runtime value constraints.
 - `Literal[...]`: enum-like value restrictions.
 
-### Persistence (SQLite + PostgreSQL via Psycopg)
-- `sqlite3` path for local/dev and tests.
-- `psycopg` path for PostgreSQL deployments.
-- Shared persistence functions hide backend-specific SQL from routes.
+### Persistence (in-memory)
+- `game_store` is a plain `dict[str, dict[str, object]]` in `backend/app/storage/db.py`.
+- `save_game_state` / `load_game_state` are the only storage helpers used by routes.
+- State is lost on process restart; persistent storage (SQLite/PostgreSQL) is a future goal.
 
 ### Dataclasses + typing
 - `@dataclass(frozen=True)` for immutable `Card`.

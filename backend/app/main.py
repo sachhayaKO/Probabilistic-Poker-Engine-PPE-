@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.core.logging import configure_logging, get_logger
 from backend.app.routes.game import router as game_router
@@ -20,6 +21,13 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Probabilistic Poker Engine API", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")

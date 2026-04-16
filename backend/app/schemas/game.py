@@ -46,3 +46,5 @@ class GameStateResponse(BaseModel):
     legal_actions: list[str] = []
     hero_equity: float | None = None
     winner: str | None = None
+    session_over: bool = False
+    hand_number: int = 1

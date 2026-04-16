@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react"
 import type { GameState, MoveLogEntry, Screen, Settings } from "./types"
-import { postAction } from "./api"
+import { postAction, getGameState } from "./api"
 import { WelcomeScreen } from "./components/WelcomeScreen"
 import { SettingsScreen } from "./components/SettingsScreen"
 import { GameTable } from "./components/GameTable"
@@ -11,12 +11,14 @@ export default function App() {
   const [moveLog, setMoveLog] = useState<MoveLogEntry[]>([])
   const [botThinking, setBotThinking] = useState(false)
   const [bigBlind, setBigBlind] = useState(10)
+  const [startingStack, setStartingStack] = useState(1000)
   const [error, setError] = useState<string | null>(null)
 
   function handleGameStart(state: GameState, settings: Settings) {
     setGameState(state)
     setMoveLog([])
     setBigBlind(settings.big_blind)
+    setStartingStack(settings.stack_size)
     setBotThinking(false)
     setError(null)
     setScreen("game")
@@ -71,6 +73,18 @@ export default function App() {
 
         setMoveLog((prev) => [...prev, ...newEntries])
         setGameState(newState)
+
+        // Between hands: winner set but session not over — fetch the auto-started next hand
+        if (newState.winner !== null && !newState.session_over) {
+          setTimeout(async () => {
+            try {
+              const nextHand = await getGameState(newState.game_id)
+              setGameState(nextHand)
+            } catch {
+              // ignore — user can still see the hand result
+            }
+          }, 2000)
+        }
       } catch {
         setError("Action failed — please try again.")
       } finally {
@@ -109,6 +123,7 @@ export default function App() {
           moveLog={moveLog}
           botThinking={botThinking}
           bigBlind={bigBlind}
+          startingStack={startingStack}
           onAction={handleAction}
           onPlayAgain={() => setScreen("settings")}
           onMenu={() => setScreen("welcome")}

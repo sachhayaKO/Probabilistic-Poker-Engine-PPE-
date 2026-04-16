@@ -16,6 +16,8 @@ export interface GameState {
   legal_actions: string[]
   hero_equity: number | null
   winner: string | null
+  session_over: boolean
+  hand_number: number
 }
 
 export interface ActionRecord {

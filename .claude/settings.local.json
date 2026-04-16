@@ -7,7 +7,14 @@
       "Bash(KMP_DUPLICATE_LIB_OK=TRUE python -m pytest engine/tests/ -q 2>&1)",
       "Bash(python3:*)",
       "Bash(npm install:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(find /Users/kimet/Documents/GitHub/Probabilistic-Poker-Engine-PPE-/Probabilistic-Poker-Engine-PPE- -type f -name \"*.py\" -exec wc -l {} \\\\;)",
+      "Bash(grep -rn \"^\\\\s*pass\\\\s*$\" /Users/kimet/Documents/GitHub/Probabilistic-Poker-Engine-PPE-/Probabilistic-Poker-Engine-PPE- --include=\"*.py\")",
+      "Bash(python:*)",
+      "Bash(git stash:*)",
+      "Bash(curl:*)"
     ]
   }
 }

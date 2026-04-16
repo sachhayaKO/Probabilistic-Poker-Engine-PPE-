@@ -1,62 +1,97 @@
-# Probabilistic Poker Engine (Heads-Up Texas Hold'em)
+# Probabilistic Poker Engine (PPE)
 
-This repository is a scaffold for a heads-up Texas Hold'em project that combines a pure-Python poker engine, a FastAPI backend, a probability-aware "cheat bot" for baseline strategy and diagnostics, and a future ML-driven opponent. At this stage, the repository contains structure and planning documentation only, so teams can align on interfaces, responsibilities, and milestones before implementation starts.
+A fully functional heads-up Texas Hold'em ML research platform. Play multi-hand sessions against bots ranging from random to a PPO-trained neural agent, while the engine computes real-time Monte Carlo equity estimates.
 
-## Quick start
+## What it is
 
-1. Review repository layout and planned responsibilities in this README and `docs/`.
-2. Set up local tooling and dependencies using placeholders in `pyproject.toml` and `requirements.txt`.
-3. Begin implementation by replacing `# TODO: implement` placeholders.
-4. Runtime commands and environment setup are **to be implemented**.
+PPE combines:
+- A pure-Python poker engine with Monte Carlo equity estimation
+- A FastAPI backend managing game state and bot logic across multiple hands
+- A React/TypeScript/Tailwind frontend for human vs. bot play
+- Three bot difficulties: random, cheat bot (perfect-information MC), and a PPO-trained agent
+- Multi-hand sessions: chip stacks persist across hands and play continues until one player busts
+- A self-play PPO training pipeline for iterating on the ML opponent
 
-## Repository map
+## Stack
 
-- `/README.md` — project overview, structure, and planning workflow.
-- `/LICENSE` — MIT license text for repository usage.
-- `/.gitignore` — common Python, environment, and tooling ignores.
-- `/pyproject.toml` — Python project metadata and tool placeholders.
-- `/requirements.txt` — initial dependency list placeholders.
-- `/docker/Dockerfile` — container build placeholder for backend/engine runtime.
-- `/docker/docker-compose.yml` — multi-service orchestration placeholder.
-- `/backend/app/main.py` — FastAPI app entrypoint placeholder.
-- `/backend/app/routes/__init__.py` — routes package marker.
-- `/backend/app/routes/game.py` — game API route placeholders.
-- `/backend/app/schemas/__init__.py` — schemas package marker.
-- `/backend/app/schemas/game.py` — request/response schema placeholders.
-- `/backend/app/storage/__init__.py` — storage package marker.
-- `/backend/app/storage/db.py` — database/session integration placeholder.
-- `/backend/app/storage/models.py` — persistence model placeholders.
-- `/backend/app/core/__init__.py` — core package marker.
-- `/backend/app/core/config.py` — configuration management placeholder.
-- `/backend/app/core/logging.py` — logging setup placeholder.
-- `/backend/tests/test_api_smoke.py` — backend API smoke test placeholder.
-- `/engine/poker/__init__.py` — poker engine package marker.
-- `/engine/poker/cards.py` — card/deck representation placeholder.
-- `/engine/poker/evaluator.py` — hand evaluator placeholder.
-- `/engine/poker/state.py` — game state container placeholder.
-- `/engine/poker/betting.py` — betting round logic placeholder.
-- `/engine/poker/game.py` — high-level game loop/orchestration placeholder.
-- `/engine/tests/test_evaluator_cases.py` — evaluator test case placeholder.
-- `/scripts/simulate_self_play.py` — script placeholder for self-play simulations.
-- `/scripts/run_monte_carlo.py` — script placeholder for Monte Carlo experiments.
-- `/docs/ARCHITECTURE.md` — system components and responsibility boundaries.
-- `/docs/API_CONTRACT.md` — planned backend endpoint contracts.
-- `/docs/STATE_REPRESENTATION.md` — planned ML-compatible state representation.
-- `/docs/DECISIONS.md` — decision log for simplifications and trade-offs.
+| Layer | Technology |
+|-------|-----------|
+| Backend | Python 3.11, FastAPI, Pydantic |
+| ML | PyTorch |
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS |
 
-## Development workflow suggestion
+## Prerequisites
 
-- Use short-lived feature branches from `main` (e.g., `feature/engine-state`, `feature/api-game-routes`).
-- Keep pull requests focused: one subsystem or interface slice at a time.
-- Introduce linting/testing commands as placeholders first, then enforce in CI once stable.
-- Suggested quality gates (to be implemented): formatting, static typing, unit tests, API smoke tests.
+- Python 3.11+
+- Node 20+
 
-## Week 1 milestone checklist
+## Running locally
 
-- [ ] Finalize data contracts between `engine/` and `backend/`.
-- [ ] Implement card/deck primitives and deterministic shuffling policy.
-- [ ] Implement minimal hand evaluator for showdown ranking.
-- [ ] Define game state transitions for heads-up preflop/flop/turn/river.
-- [ ] Draft and validate `/game/new`, `/game/action`, and `/game/state` API responses.
-- [ ] Set up first smoke tests for backend and evaluator edge cases.
-- [ ] Document baseline cheat-bot probability assumptions for iteration 2.
+**Backend**
+
+```bash
+# From repo root
+pip install -e ".[dev]"
+uvicorn backend.app.main:app --reload
+```
+
+API is available at `http://localhost:8000`.
+
+**Frontend**
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+UI is available at `http://localhost:5173`.
+
+## Running tests
+
+```bash
+# pyproject.toml sets testpaths = ["backend/tests", "engine/tests"] automatically
+pytest
+```
+
+## Gameplay
+
+- Sessions run until one player reaches 0 chips — not just one hand
+- After each hand, the pot is awarded to the winner and a new hand starts automatically with the updated stacks
+- A brief transition message appears between hands; the full Game Over screen with final chip counts only shows when a player busts
+- Raise sizing uses standard poker presets (¼ Pot, ½ Pot, ¾ Pot, 1× Pot, 2× Pot, All-In) plus a manual slider for custom amounts; all values are clamped to `[big_blind, player_stack]`
+
+## Bot modes
+
+| Mode | Description |
+|------|-------------|
+| `random` | Uniform action sampling — fold/call/raise with equal probability |
+| `cheat` | Perfect-information Monte Carlo: sees both hole cards, runs 300 rollouts to pick the highest-EV action |
+| `ppo` | PPO-trained neural agent — loads `scripts/checkpoints/checkpoint_latest.pt`; **falls back to random if no checkpoint exists**. Run `python scripts/train_self_play.py` first to generate one. |
+
+## ML pipeline
+
+- **State encoding**: `GameStateEncoder` produces 30-dimensional state vectors from raw game state
+- **Model**: `PPEActorCritic` — shared-trunk actor-critic network (policy head + value head)
+- **Training**: `python scripts/train_self_play.py` — runs self-play PPO and saves checkpoints to `scripts/checkpoints/`
+
+## API
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/start_game` | POST | Start a new session; returns initial hand state with `hand_number: 1` |
+| `/action` | POST | Submit a player action; auto-starts next hand on winner if stacks allow |
+| `/game_state/{game_id}` | GET | Fetch current state (used by frontend after the between-hands pause) |
+
+`GameStateResponse` includes `session_over: bool` (true only when a player busts) and `hand_number: int` (increments each hand).
+
+## Project structure
+
+```
+backend/      FastAPI app, routes (/start_game, /action, /game_state), schemas, config
+engine/       Pure-Python poker engine: cards, evaluator, betting rounds, game loop, MC equity
+frontend/     React/TypeScript/Tailwind game UI
+scripts/      Self-play PPO training (train_self_play.py) and utility scripts
+scripts/checkpoints/  PPO checkpoint storage (checkpoint_latest.pt loaded at runtime)
+docs/         Architecture, API contract, state representation, and decision log
+```
