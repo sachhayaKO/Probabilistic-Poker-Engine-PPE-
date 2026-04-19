@@ -4,7 +4,10 @@ from __future__ import annotations
 Game routes: start_game, game_state, and action.
 """
 
+import asyncio
 import random as stdlib_random
+from concurrent.futures import ThreadPoolExecutor
+from functools import lru_cache
 
 from fastapi import APIRouter, HTTPException
 
@@ -22,6 +25,15 @@ from engine.poker.state import GameState
 logger = get_logger(__name__)
 
 router = APIRouter(tags=["game"])
+
+_EQUITY_EXECUTOR = ThreadPoolExecutor(max_workers=2)
+
+
+@lru_cache(maxsize=256)
+def _cached_equity(hole_tuple: tuple[str, ...], board_tuple: tuple[str, ...]) -> float:
+    hole = [Card.from_str(c) for c in hole_tuple]
+    board = [Card.from_str(c) for c in board_tuple]
+    return run_equity_estimate(hole, board, n_simulations=200)
 
 
 # ── Deck helpers ──────────────────────────────────────────────────────────────
@@ -118,7 +130,7 @@ def _cheat_bot_action(state: GameState, big_blind: int) -> tuple[str, int | None
     n_board_needed = 5 - len(board)
     rng = stdlib_random.Random()
     wins = 0.0
-    n = 300
+    n = 150
     for _ in range(n):
         sample = rng.sample(unknown, n_board_needed)
         full_board = board + sample
@@ -242,7 +254,7 @@ def _to_game_state_response(
 
 
 @router.post("/start_game", response_model=GameStateResponse)
-def start_game(payload: StartGameRequest) -> GameStateResponse:
+async def start_game(payload: StartGameRequest) -> GameStateResponse:
     state = new_game(
         stack_size=payload.stack_size,
         small_blind=payload.small_blind,
@@ -260,7 +272,14 @@ def start_game(payload: StartGameRequest) -> GameStateResponse:
 
     save_game_state(state_dict)
 
-    hero_equity = run_equity_estimate(state.hands["hero"], state.board)
+    loop = asyncio.get_event_loop()
+    hero_equity = await loop.run_in_executor(
+        _EQUITY_EXECUTOR,
+        lambda: _cached_equity(
+            tuple(c.to_str() for c in state.hands["hero"]),
+            tuple(c.to_str() for c in state.board),
+        ),
+    )
 
     return _to_game_state_response(
         state_dict,
@@ -273,7 +292,7 @@ def start_game(payload: StartGameRequest) -> GameStateResponse:
 
 
 @router.get("/game_state/{game_id}", response_model=GameStateResponse)
-def game_state(game_id: str) -> GameStateResponse:
+async def game_state(game_id: str) -> GameStateResponse:
     state_dict = load_game_state(game_id)
     if state_dict is None:
         raise HTTPException(status_code=404, detail="game not found")
@@ -290,7 +309,14 @@ def game_state(game_id: str) -> GameStateResponse:
 
     if state_dict.get("street") != "showdown" and winner is None:
         state = _reconstruct_game_state(state_dict)
-        hero_equity = run_equity_estimate(state.hands["hero"], state.board)
+        loop = asyncio.get_event_loop()
+        hero_equity = await loop.run_in_executor(
+            _EQUITY_EXECUTOR,
+            lambda: _cached_equity(
+                tuple(c.to_str() for c in state.hands["hero"]),
+                tuple(c.to_str() for c in state.board),
+            ),
+        )
 
     return _to_game_state_response(
         state_dict,
@@ -303,7 +329,7 @@ def game_state(game_id: str) -> GameStateResponse:
 
 
 @router.post("/action", response_model=GameStateResponse)
-def action(payload: ActionRequest) -> GameStateResponse:
+async def action(payload: ActionRequest) -> GameStateResponse:
     state_dict = load_game_state(payload.game_id)
     if state_dict is None:
         raise HTTPException(status_code=404, detail="game not found")
@@ -345,7 +371,14 @@ def action(payload: ActionRequest) -> GameStateResponse:
     # Compute hero equity (only during live non-showdown play)
     hero_equity: float | None = None
     if winner is None and state.street != "showdown":
-        hero_equity = run_equity_estimate(state.hands["hero"], state.board)
+        loop = asyncio.get_event_loop()
+        hero_equity = await loop.run_in_executor(
+            _EQUITY_EXECUTOR,
+            lambda: _cached_equity(
+                tuple(c.to_str() for c in state.hands["hero"]),
+                tuple(c.to_str() for c in state.board),
+            ),
+        )
 
     # Build base state dict
     new_dict = state.to_dict()

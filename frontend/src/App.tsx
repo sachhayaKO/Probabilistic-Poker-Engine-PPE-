@@ -36,7 +36,7 @@ export default function App() {
         // Run API call and minimum 1.2s delay in parallel for bot-thinking UX
         const [newState] = await Promise.all([
           postAction(gameState.game_id, action, amount),
-          new Promise<void>((resolve) => setTimeout(resolve, 1200)),
+          new Promise<void>((resolve) => setTimeout(resolve, 800)),
         ])
 
         // Build hero log entry

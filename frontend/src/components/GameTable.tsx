@@ -98,7 +98,7 @@ export function GameTable({
 
         {/* Community board + pot */}
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4">
-          <div className="flex gap-2">
+          <div className={`flex gap-2 transition-opacity duration-200 ${botThinking ? 'opacity-50 animate-pulse' : 'opacity-100'}`}>
             {[0, 1, 2, 3, 4].map((i) => (
               <Card
                 key={i}
