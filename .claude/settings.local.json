@@ -14,7 +14,11 @@
       "Bash(grep -rn \"^\\\\s*pass\\\\s*$\" /Users/kimet/Documents/GitHub/Probabilistic-Poker-Engine-PPE-/Probabilistic-Poker-Engine-PPE- --include=\"*.py\")",
       "Bash(python:*)",
       "Bash(git stash:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)",
+      "Bash(git rm:*)",
+      "Bash(git push:*)"
     ]
   }
 }
