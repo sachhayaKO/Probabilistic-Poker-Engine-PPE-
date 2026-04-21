@@ -33,7 +33,7 @@ export function WelcomeScreen({ onStart }: WelcomeScreenProps) {
             Probabilistic Poker Engine
           </h1>
           <p className="text-slate-400 font-mono text-sm">
-            Heads-Up Texas Hold'em · ML Research Platform
+            Heads-Up Texas Hold'em · Probabilistic ML Research Platform
           </p>
         </div>
       </div>
