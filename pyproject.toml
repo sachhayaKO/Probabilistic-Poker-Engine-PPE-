@@ -24,6 +24,9 @@ dev = [
   "pytest-anyio",
 ]
 
+[tool.setuptools.packages.find]
+include = ["backend*", "engine*"]
+
 [tool.pytest.ini_options]
 testpaths = ["backend/tests", "engine/tests"]
 pythonpath = ["."]

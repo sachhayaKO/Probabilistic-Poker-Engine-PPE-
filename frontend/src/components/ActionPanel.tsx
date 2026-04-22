@@ -39,6 +39,9 @@ export function ActionPanel({
     setActivePreset(null)
   }, [bigBlind, street])
 
+  const isPlayerTurn = toAct === "hero"
+  const disabled = !isPlayerTurn || botThinking || street === "showdown"
+
   useEffect(() => {
     if (disabled) return
 
@@ -104,9 +107,6 @@ export function ActionPanel({
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [disabled, legalActions, showRaise, raiseAmount, bigBlind, playerStack, onAction])
-
-  const isPlayerTurn = toAct === "hero"
-  const disabled = !isPlayerTurn || botThinking || street === "showdown"
 
   const clamp = (v: number) => Math.min(Math.max(v, bigBlind), playerStack)
 
