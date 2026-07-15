@@ -7,7 +7,7 @@ import type { PostflopSpot } from './grade';
 
 const c = cardFromString;
 
-// Hero has 22 (only two outs) facing a huge river bet vs a nit: clear fold.
+// Hero has 22 (only two outs) facing a huge river bet vs the station: clear fold.
 const drawDeadSpot = (): PostflopSpot => ({
   hero: [c('2c'), c('2d')],
   board: ['As', 'Ks', 'Qs', 'Jh', '9d'].map(c),
