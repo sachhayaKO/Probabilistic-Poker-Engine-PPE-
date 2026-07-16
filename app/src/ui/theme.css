@@ -1,0 +1,148 @@
+/* ── Midnight Casino design tokens ─────────────────────────────── */
+:root {
+  --bg: #07090b;
+  --felt: #123524;
+  --felt-dark: #0b2318;
+  --gold: #c9a227;
+  --gold-soft: #e6c968;
+  --cream: #f3ead7;
+  --ink: #17140e;
+  --red: #a4243b;
+  --muted: #8b937e;
+  --panel: #101410;
+  --panel-edge: #2b3125;
+  --good: #7fb069;
+  --font-display: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --font-body: Georgia, 'Times New Roman', serif;
+  --font-mono: 'SF Mono', Menlo, Consolas, monospace;
+}
+
+/* ── Cards ─────────────────────────────────────────────────────── */
+.card {
+  width: 64px;
+  height: 92px;
+  border-radius: 7px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.55);
+  user-select: none;
+}
+
+.card-face {
+  background: linear-gradient(160deg, #fbf5e6, var(--cream));
+  border: 1px solid #d8ccb0;
+  color: var(--ink);
+  font-family: var(--font-display);
+}
+
+.card-face.red {
+  color: var(--red);
+}
+
+.card-rank {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.card-suit {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.card-back {
+  background:
+    repeating-linear-gradient(45deg, rgba(201, 162, 39, 0.16) 0 6px, transparent 6px 12px),
+    linear-gradient(160deg, #14233d, #0c1626);
+  border: 1px solid var(--gold);
+}
+
+.card-slot {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px dashed rgba(201, 162, 39, 0.25);
+  box-shadow: none;
+}
+
+/* ── Chips ─────────────────────────────────────────────────────── */
+.chipstack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.chipstack .chips {
+  position: relative;
+  width: 34px;
+  height: 44px;
+}
+
+.chip {
+  position: absolute;
+  left: 0;
+  width: 32px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #d8b544, var(--gold) 70%);
+  border: 1px solid #6e5714;
+  animation: chip-in 260ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.chip-amount {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--gold-soft);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+}
+
+/* ── Motion ────────────────────────────────────────────────────── */
+@keyframes deal-in {
+  from {
+    transform: translate(-30vw, -22vh) rotate(-18deg);
+    opacity: 0;
+  }
+  55% {
+    opacity: 1;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.card.dealt {
+  animation: deal-in 420ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+@keyframes flip-in {
+  from {
+    transform: rotateY(88deg);
+  }
+  to {
+    transform: rotateY(0);
+  }
+}
+
+@keyframes chip-in {
+  from {
+    transform: translateY(16px) scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.0);
+  }
+  50% {
+    box-shadow: 0 0 18px 4px rgba(201, 162, 39, 0.45);
+  }
+}
