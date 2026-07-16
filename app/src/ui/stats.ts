@@ -1,4 +1,3 @@
-import type { DecisionGrade } from '../grading/grade';
 import type { GradedDecision } from '../grading/gradeHand';
 
 export interface SessionStats {
@@ -21,23 +20,16 @@ export function accumulate(stats: SessionStats, decisions: GradedDecision[]): Se
   let st = { ...stats };
   for (const d of decisions) {
     if (d.grade && typeof d.grade === 'object' && 'label' in d.grade) {
-      const g = d.grade as DecisionGrade;
+      const g = d.grade;
       st.decisions += 1;
-
-      // Map label to the field name (label can be 'mistake' but field is 'mistakes')
       const key = g.label === 'mistake' ? 'mistakes' : g.label;
-      (st as any)[key] += 1;
-
-      // Only postflop decisions have evLost
-      if ('evLost' in g) {
-        st.evLostTotal += g.evLost;
-      }
+      st[key as keyof SessionStats]++;
+      st.evLostTotal += 'evLost' in g ? g.evLost : 0;
     }
   }
   return st;
 }
 
 export function accuracy(stats: SessionStats): number {
-  if (stats.decisions === 0) return 0;
-  return stats.best / stats.decisions;
+  return stats.decisions === 0 ? 1 : (stats.best + stats.okay) / stats.decisions;
 }

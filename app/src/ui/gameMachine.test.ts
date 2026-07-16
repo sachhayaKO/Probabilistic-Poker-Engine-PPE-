@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import type { HandResult } from '../engine/hand';
 import { applyAction, startHand } from '../engine/hand';
 import {
-  BET_PRESETS, START_STACK, applyHandResult, dealHand, newSession, presetRaiseTo,
+  BET_PRESETS, START_STACK, VILLAIN_SEAT, applyHandResult, dealHand, newSession, presetRaiseTo,
 } from './gameMachine';
 import { accumulate, accuracy, emptyStats } from './stats';
 
