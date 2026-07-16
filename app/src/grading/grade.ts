@@ -28,6 +28,8 @@ export interface PostflopSpot {
   bigBlind: number;
 }
 
+const GERUNDS = { fold: 'folding', call: 'calling', raise: 'raising' } as const;
+
 const BEST_TOLERANCE_BB = 0.1;
 const OKAY_TOLERANCE_BB = 1.0;
 
@@ -87,7 +89,7 @@ export function gradePostflopDecision(
   explanation +=
     label === 'best'
       ? `${cap(taken)} was the best available action.`
-      : `${cap(bestAction)} was best; ${taken === 'fold' ? 'folding' : taken + 'ing'} ` +
+      : `${cap(bestAction)} was best; ${GERUNDS[taken]} ` +
         `loses ${fmt(evLost)} chips on average.`;
 
   return { label, evLost, bestAction, actionTaken: taken, equity, requiredEquity, evByAction, explanation };
