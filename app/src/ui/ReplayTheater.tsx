@@ -30,10 +30,11 @@ function actorName(seat: Seat, personaName: string): string {
   return seat === HERO_SEAT ? 'You' : personaName;
 }
 
-function describeAction(action: LogEntry['action']): string {
-  if (action.type === 'fold') return 'folds';
-  if (action.type === 'call') return 'calls';
-  return `raises to ${action.to.toLocaleString()}`;
+function describeAction(action: LogEntry['action'], hero: boolean): string {
+  const s = hero ? '' : 's'; // "You call" / "The Nit calls"
+  if (action.type === 'fold') return `fold${s}`;
+  if (action.type === 'call') return `call${s}`;
+  return `raise${s} to ${action.to.toLocaleString()}`;
 }
 
 function EVBarRow({
@@ -134,7 +135,7 @@ function StepView({
         ))}
       </div>
       <p className="replay-action">
-        <strong>{actorName(entry.seat, personaName)}</strong> {describeAction(entry.action)}
+        <strong>{actorName(entry.seat, personaName)}</strong> {describeAction(entry.action, entry.seat === HERO_SEAT)}
       </p>
       {entry.seat !== HERO_SEAT ? null : grade ? (
         <GradePanel grade={grade.grade} />

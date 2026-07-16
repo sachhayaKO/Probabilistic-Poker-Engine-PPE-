@@ -85,7 +85,7 @@ export function Ribbon({ grades, gradesFailed, stats, phase, matchOver, onOpenTh
       <h2 className="ribbon-header">Review</h2>
       <div className="ribbon-stats">
         <span className="ribbon-stat">
-          <span className="ribbon-stat-value">{stats.decisions}</span> hands
+          <span className="ribbon-stat-value">{stats.decisions}</span> decisions
         </span>
         <span className="ribbon-stat">
           <span className="ribbon-stat-value">{acc}%</span> accuracy
