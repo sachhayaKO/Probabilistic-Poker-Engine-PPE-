@@ -17,17 +17,15 @@ export const emptyStats = (): SessionStats => ({
 });
 
 export function accumulate(stats: SessionStats, decisions: GradedDecision[]): SessionStats {
-  let st = { ...stats };
-  for (const d of decisions) {
-    if (d.grade && typeof d.grade === 'object' && 'label' in d.grade) {
-      const g = d.grade;
-      st.decisions += 1;
-      const key = g.label === 'mistake' ? 'mistakes' : g.label;
-      st[key as keyof SessionStats]++;
-      st.evLostTotal += 'evLost' in g ? g.evLost : 0;
-    }
+  const next = { ...stats };
+  for (const g of decisions) {
+    next.decisions++;
+    if (g.grade.label === 'best') next.best++;
+    else if (g.grade.label === 'okay') next.okay++;
+    else next.mistakes++;
+    next.evLostTotal += 'evLost' in g.grade ? g.grade.evLost : 0;
   }
-  return st;
+  return next;
 }
 
 export function accuracy(stats: SessionStats): number {
