@@ -3,7 +3,7 @@ import { applyAction, startHand } from '../engine/hand';
 import {
   BET_PRESETS, START_STACK, applyHandResult, dealHand, newSession, presetRaiseTo,
 } from './gameMachine';
-import { accumulate, accuracy, emptyStats } from './stats';
+import { accumulate, accuracy, emptyStats, PREFLOP_MISTAKE_EV } from './stats';
 
 describe('session', () => {
   it('training mode resets stacks and alternates the button each deal', () => {
@@ -78,5 +78,17 @@ describe('stats', () => {
     expect(st.mistakes).toBe(1);
     expect(st.evLostTotal).toBe(180);
     expect(accuracy(st)).toBeCloseTo(0.5);
+  });
+
+  it('counts a 1BB proxy EV loss for preflop mistakes', () => {
+    let st = emptyStats();
+    st = accumulate(st, [
+      {
+        street: 'preflop', logIndex: 0,
+        grade: { label: 'mistake', recommended: 'raise', actionTaken: 'call', explanation: '' },
+      },
+    ]);
+    expect(st.mistakes).toBe(1);
+    expect(st.evLostTotal).toBe(PREFLOP_MISTAKE_EV);
   });
 });

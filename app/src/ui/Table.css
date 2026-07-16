@@ -177,7 +177,7 @@
 }
 
 .equity-bar.villain {
-  background: linear-gradient(90deg, var(--red), #c4536a);
+  background: linear-gradient(90deg, var(--red), var(--red-soft));
 }
 
 .equity-pct {
