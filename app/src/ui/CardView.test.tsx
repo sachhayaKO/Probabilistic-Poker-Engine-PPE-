@@ -1,48 +1,27 @@
 // @vitest-environment jsdom
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import { CardView } from './CardView'
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { cardFromString } from '../engine/cards';
+import { CardView } from './CardView';
 
 describe('CardView', () => {
-  it('renders two cards with correct rank and suit', () => {
-    render(<CardView rank="A" suit="♠" />)
-    expect(screen.getByText('A')).toBeInTheDocument()
-    expect(screen.getByText('♠')).toBeInTheDocument()
-  })
+  it('renders rank and suit for a face-up card', () => {
+    render(<CardView card={cardFromString('Ah')} />);
+    const el = screen.getByLabelText('Ah');
+    expect(el.textContent).toContain('A');
+    expect(el.textContent).toContain('♥');
+    expect(el.className).toContain('red');
+  });
 
-  it('applies correct styling to rank span', () => {
-    render(<CardView rank="K" suit="♥" />)
-    const rankSpan = screen.getByText('K')
-    expect(rankSpan.className).toContain('rank')
-  })
+  it('renders T as 10 and black suits without the red class', () => {
+    render(<CardView card={cardFromString('Ts')} />);
+    const el = screen.getByLabelText('Ts');
+    expect(el.textContent).toContain('10');
+    expect(el.className).not.toContain('red');
+  });
 
-  it('applies correct styling to suit span', () => {
-    render(<CardView rank="Q" suit="♦" />)
-    const suitSpan = screen.getByText('♦')
-    expect(suitSpan.className).toContain('suit')
-  })
-
-  it('applies red color for hearts', () => {
-    const { container } = render(<CardView rank="5" suit="♥" />)
-    const suitSpan = container.querySelector('.suit')
-    expect(suitSpan?.className).toContain('red')
-  })
-
-  it('applies red color for diamonds', () => {
-    const { container } = render(<CardView rank="3" suit="♦" />)
-    const suitSpan = container.querySelector('.suit')
-    expect(suitSpan?.className).toContain('red')
-  })
-
-  it('applies black color for spades', () => {
-    const { container } = render(<CardView rank="2" suit="♠" />)
-    const suitSpan = container.querySelector('.suit')
-    expect(suitSpan?.className).toContain('black')
-  })
-
-  it('applies black color for clubs', () => {
-    const { container } = render(<CardView rank="7" suit="♣" />)
-    const suitSpan = container.querySelector('.suit')
-    expect(suitSpan?.className).toContain('black')
-  })
-})
+  it('renders a face-down back', () => {
+    render(<CardView faceDown card={cardFromString('Ah')} />);
+    expect(screen.getByLabelText('face-down card').className).toContain('card-back');
+  });
+});

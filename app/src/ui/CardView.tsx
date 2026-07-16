@@ -1,18 +1,30 @@
-import type { ReactNode } from 'react'
-import './theme.css'
+import type { Card } from '../engine/cards';
+import { RANKS, SUITS, rankOf, suitOf } from '../engine/cards';
 
-interface CardViewProps {
-  rank: string
-  suit: string
-}
+const SUIT_GLYPHS = ['♣', '♦', '♥', '♠']; // index-aligned with SUITS 'cdhs'
+const SUIT_RED = [false, true, true, false];
 
-export function CardView({ rank, suit }: CardViewProps): ReactNode {
-  const suitColor = suit === '♥' || suit === '♦' ? 'red' : 'black'
-
+export function CardView({
+  card,
+  faceDown = false,
+  dealt = false,
+}: {
+  card?: Card;
+  faceDown?: boolean;
+  dealt?: boolean;
+}) {
+  if (faceDown || card === undefined) {
+    return <div className={`card card-back${dealt ? ' dealt' : ''}`} aria-label="face-down card" />;
+  }
+  const r = RANKS[rankOf(card)];
+  const s = suitOf(card);
   return (
-    <div className="card">
-      <span className="rank">{rank}</span>
-      <span className={`suit ${suitColor}`}>{suit}</span>
+    <div
+      className={`card card-face${SUIT_RED[s] ? ' red' : ''}${dealt ? ' dealt' : ''}`}
+      aria-label={`${r}${SUITS[s]}`}
+    >
+      <span className="card-rank">{r === 'T' ? '10' : r}</span>
+      <span className="card-suit">{SUIT_GLYPHS[s]}</span>
     </div>
-  )
+  );
 }
