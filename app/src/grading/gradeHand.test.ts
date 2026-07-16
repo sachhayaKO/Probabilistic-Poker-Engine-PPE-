@@ -4,6 +4,7 @@ import type { HandState, Action } from '../engine/hand';
 import { startHand, applyAction } from '../engine/hand';
 import { PERSONAS } from '../personas/persona';
 import { gradeHand } from './gradeHand';
+import type { DecisionGrade } from './grade';
 
 const play = (seed: number, ...actions: Action[]): HandState =>
   actions.reduce(applyAction, startHand({ buttonSeat: 0, stacks: [1000, 1000], smallBlind: 5, bigBlind: 10, seed }));
@@ -49,5 +50,18 @@ describe('gradeHand', () => {
     for (const g of grades) {
       expect((g.grade as { explanation: string }).explanation.length).toBeGreaterThan(10);
     }
+  });
+
+  it('models no raise option when the log entry could not raise (facing all-in)', () => {
+    // Hero seat 0 on the button. Preflop: hero limps, BB checks. Flop: villain shoves, hero calls.
+    let s = startHand({ buttonSeat: 0, stacks: [1000, 1000], smallBlind: 5, bigBlind: 10, seed: 99 });
+    s = applyAction(s, { type: 'call' }); // hero limp
+    s = applyAction(s, { type: 'call' }); // BB check -> flop
+    s = applyAction(s, { type: 'raise', to: 990 }); // villain (seat 1) shoves
+    s = applyAction(s, { type: 'call' }); // hero calls -> showdown
+    const grades = gradeHand(s, 0, PERSONAS.balanced, 200, mulberry32(1));
+    const flop = grades.find((g) => g.street === 'flop')!;
+    const grade = flop.grade as DecisionGrade;
+    expect(grade.evByAction.raise).toBeNull();
   });
 });

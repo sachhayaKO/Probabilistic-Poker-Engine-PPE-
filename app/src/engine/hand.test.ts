@@ -97,4 +97,23 @@ describe('betting flow', () => {
     expect(s.log[0]).toMatchObject({ seat: 0, street: 'preflop', toCall: 5, potBefore: 15, committedBefore: 5 });
     expect(s.log[1]).toMatchObject({ seat: 1, street: 'preflop', toCall: 20, potBefore: 40, committedBefore: 10 });
   });
+
+  it('log entries record stackBehind, canRaise, maxRaiseTo at decision time', () => {
+    let s = startHand({ buttonSeat: 0, stacks: [1000, 1000], smallBlind: 5, bigBlind: 10, seed: 42 });
+    s = applyAction(s, { type: 'raise', to: 30 });
+    expect(s.log[0]).toMatchObject({
+      stackBehind: 995, // button posted SB 5
+      canRaise: true,
+      maxRaiseTo: 1000,
+    });
+    s = applyAction(s, { type: 'call' });
+    expect(s.log[1]).toMatchObject({ stackBehind: 990, canRaise: true });
+  });
+
+  it('log entry facing an all-in has canRaise false and maxRaiseTo 0', () => {
+    let s = startHand({ buttonSeat: 0, stacks: [1000, 1000], smallBlind: 5, bigBlind: 10, seed: 7 });
+    s = applyAction(s, { type: 'raise', to: 1000 }); // button open-shoves
+    s = applyAction(s, { type: 'call' });
+    expect(s.log[1]).toMatchObject({ canRaise: false, maxRaiseTo: 0, stackBehind: 990 });
+  });
 });

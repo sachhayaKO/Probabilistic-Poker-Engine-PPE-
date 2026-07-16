@@ -29,6 +29,9 @@ export interface LogEntry {
   toCall: number;
   potBefore: number;       // pot + both committed at decision time
   committedBefore: number; // acting seat's committed chips at decision time
+  stackBehind: number;     // acting seat's stack behind at decision time
+  canRaise: boolean;       // whether raising was legal at decision time
+  maxRaiseTo: number;      // legal max raise-to at decision time (0 if canRaise is false)
   board: Card[];
 }
 
@@ -158,6 +161,9 @@ export function applyAction(prev: HandState, a: Action): HandState {
     toCall: la.callAmount,
     potBefore: s.pot + s.committed[0] + s.committed[1],
     committedBefore: s.committed[me],
+    stackBehind: s.stacks[me],
+    canRaise: la.canRaise,
+    maxRaiseTo: la.maxRaiseTo,
     board: [...s.board],
   });
 

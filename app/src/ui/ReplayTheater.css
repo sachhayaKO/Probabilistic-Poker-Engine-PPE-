@@ -1,0 +1,288 @@
+/* ── Replay Theater: full-screen hand review modal ──────────────── */
+.replay-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 4, 5, 0.86);
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.replay-stage {
+  width: min(720px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 28px;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 10px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  color: var(--cream);
+  box-sizing: border-box;
+}
+
+.replay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--panel-edge);
+  padding-bottom: 12px;
+}
+
+.replay-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.03em;
+}
+
+.replay-close {
+  background: transparent;
+  border: 1px solid var(--panel-edge);
+  color: var(--cream);
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.replay-close:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── Scrubber ─────────────────────────────────────────────────── */
+.replay-scrubber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.replay-nav-btn {
+  font-family: var(--font-body);
+  font-size: 14px;
+  background: transparent;
+  border: 1px solid var(--panel-edge);
+  color: var(--cream);
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.replay-nav-btn:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.replay-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.replay-step-counter {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  min-width: 140px;
+  text-align: center;
+}
+
+/* ── Step content ─────────────────────────────────────────────── */
+.replay-step,
+.replay-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.replay-board {
+  display: flex;
+  gap: 8px;
+  min-height: 92px;
+}
+
+.replay-mono {
+  font-family: var(--font-mono);
+}
+
+.replay-pot,
+.replay-action {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--cream);
+}
+
+.replay-holes {
+  display: flex;
+  gap: 32px;
+}
+
+.replay-hole {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.replay-hole-name {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.replay-hole-cards {
+  display: flex;
+  gap: 4px;
+}
+
+.replay-no-grade,
+.replay-no-raise {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ── Grade panel ──────────────────────────────────────────────── */
+.replay-grade {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--panel-edge);
+}
+
+.replay-grade-label {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+}
+
+.replay-symbol-good {
+  color: var(--good);
+}
+
+.replay-symbol-okay {
+  color: var(--gold-soft);
+}
+
+.replay-symbol-mistake {
+  color: var(--red);
+}
+
+.replay-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.replay-bar-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 70px;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+
+.replay-bar-best {
+  border-color: var(--gold);
+}
+
+.replay-bar-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--cream);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.replay-tag-you {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--gold-soft);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+.replay-bar-track {
+  height: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.replay-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+}
+
+.replay-bar-good {
+  background: var(--good);
+}
+
+.replay-bar-red {
+  background: var(--red);
+}
+
+.replay-bar-value {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--cream);
+  text-align: right;
+}
+
+.replay-equation {
+  margin: 0;
+  padding: 12px 16px;
+  border-left: 3px solid var(--gold);
+  background: rgba(201, 162, 39, 0.06);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--cream);
+}
+
+.replay-equity-line {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ── Result summary ───────────────────────────────────────────── */
+.replay-result-winner {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--gold);
+  margin: 0;
+}
+
+.replay-result-pot,
+.replay-result-mode {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--cream);
+}

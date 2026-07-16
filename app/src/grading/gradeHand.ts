@@ -67,11 +67,17 @@ export function gradeHand(
 
     // Postflop: rebuild the spot from the log entry.
     // If the hero raised, raiseCost is exactly what they added (to − committedBefore).
-    // Otherwise model the raise option as a pot-ish raise for the EV comparison.
+    // Otherwise model the raise option as a pot-ish raise, clamped to what was
+    // actually legal; if no raise was legal (facing all-in), there is no raise option.
     const raiseCost =
       entry.action.type === 'raise'
         ? entry.action.to - entry.committedBefore
-        : entry.toCall + Math.max(entry.potBefore, bb * 2);
+        : entry.canRaise
+          ? Math.min(
+              entry.toCall + Math.max(entry.potBefore, bb * 2),
+              entry.maxRaiseTo - entry.committedBefore,
+            )
+          : null;
     grades.push({
       street: entry.street, logIndex,
       grade: gradePostflopDecision(
