@@ -302,3 +302,35 @@
     flex-direction: column;
   }
 }
+
+.drill-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  margin: 0 16px;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 6px;
+  font-family: var(--font-body);
+  color: var(--cream);
+}
+
+.drill-banner-label {
+  font-weight: bold;
+  color: var(--gold-soft);
+}
+
+.drill-banner-status {
+  color: var(--good);
+}
+
+.app-drill-notice {
+  margin: 12px 16px;
+  padding: 10px 16px;
+  background: var(--panel);
+  border: 1px solid var(--red-soft);
+  border-radius: 6px;
+  color: var(--cream);
+  font-family: var(--font-body);
+}
