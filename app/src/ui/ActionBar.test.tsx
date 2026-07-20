@@ -17,8 +17,8 @@ function heroGame(act: (a: Action) => void, nextHand = () => {}): Game {
     },
     hand, visibleBoard: [], phase: 'hero',
     legal: { canFold: true, callAmount: 50, canRaise: true, minRaiseTo: 200, maxRaiseTo: 10000 },
-    grades: null, gradesFailed: false, race: null,
-    startSession: () => {}, act, nextHand,
+    grades: null, gradesFailed: false, race: null, drill: null,
+    startSession: () => {}, startDrill: () => {}, act, nextHand,
   };
 }
 

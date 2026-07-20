@@ -12,8 +12,8 @@ function gameFixture(overrides: Partial<Game>): Game {
       stacks: [10000, 10000], handNumber: 1, baseSeed: 1, matchOver: false,
     },
     hand: null, visibleBoard: [], phase: 'hero', legal: null,
-    grades: null, gradesFailed: false, race: null,
-    startSession: () => {}, act: () => {}, nextHand: () => {},
+    grades: null, gradesFailed: false, race: null, drill: null,
+    startSession: () => {}, startDrill: () => {}, act: () => {}, nextHand: () => {},
     ...overrides,
   };
 }
