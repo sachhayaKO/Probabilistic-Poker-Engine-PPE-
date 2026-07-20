@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { PERSONAS } from './personas/persona';
 import type { Mode, PersonaKey } from './ui/gameMachine';
 import { BIG_BLIND } from './ui/gameMachine';
@@ -10,88 +11,32 @@ import { emptyStats, accumulate } from './ui/stats';
 import type { SessionStats } from './ui/stats';
 import * as sound from './ui/sound';
 import { useGame } from './ui/useGame';
+import type { Game } from './ui/useGame';
 import { GradeClient } from './worker/gradeClient';
+import { CoachFeed } from './ui/CoachFeed';
+import { ReportCard } from './ui/ReportCard';
+import { aggregate } from './profile/aggregate';
+import { coachState, drillRecovered } from './profile/coach';
+import type { ProfileStore } from './profile/db';
+import { openProfileStore } from './profile/db';
+import { generateDrill } from './profile/drills';
+import type { HandRecord } from './profile/records';
+import { buildHandRecord } from './profile/records';
+import { leakLabel } from './profile/tags';
 import './App.css';
 
-const MODES: { key: Mode; label: string; blurb: string }[] = [
-  { key: 'training', label: 'Training', blurb: 'Stacks reset to 100BB every hand' },
-  { key: 'match', label: 'Match', blurb: 'Persistent stacks — play to the felt' },
-];
-
-const PERSONA_BLURBS: Record<PersonaKey, string> = {
-  nit: 'Plays only premium hands and folds the moment things get expensive.',
-  maniac: 'Raises early, raises often, and dares you to believe him.',
-  station: 'Calls with almost anything and almost never lets go.',
-  balanced: 'Mixes it up with sound fundamentals and few leaks.',
-};
-
-const PERSONA_ORDER: PersonaKey[] = ['nit', 'maniac', 'station', 'balanced'];
-
-function MenuScreen({ onStart }: { onStart: (mode: Mode, personaKey: PersonaKey) => void }) {
-  const [mode, setMode] = useState<Mode>('training');
-  const [personaKey, setPersonaKey] = useState<PersonaKey>('balanced');
-
-  return (
-    <div className="menu-screen">
-      <div className="menu-vignette" />
-      <div className="menu-content">
-        <h1 className="menu-title">Probabilistic Poker Engine</h1>
-        <p className="menu-subtitle">Midnight Casino</p>
-
-        <div className="menu-section">
-          <h2 className="menu-section-title">Mode</h2>
-          <div className="menu-cards menu-modes">
-            {MODES.map((m) => (
-              <button
-                key={m.key}
-                type="button"
-                className={`menu-card${mode === m.key ? ' menu-card-selected' : ''}`}
-                onClick={() => setMode(m.key)}
-              >
-                <span className="menu-card-title">{m.label}</span>
-                <span className="menu-card-blurb">{m.blurb}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="menu-section">
-          <h2 className="menu-section-title">Opponent</h2>
-          <div className="menu-cards menu-personas">
-            {PERSONA_ORDER.map((key) => (
-              <button
-                key={key}
-                type="button"
-                className={`menu-card${personaKey === key ? ' menu-card-selected' : ''}`}
-                onClick={() => setPersonaKey(key)}
-              >
-                <span className="menu-card-title">{PERSONAS[key].name}</span>
-                <span className="menu-card-blurb">{PERSONA_BLURBS[key]}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <button
-          type="button"
-          className="btn btn-gold menu-deal-btn"
-          onClick={() => onStart(mode, personaKey)}
-        >
-          Deal me in
-        </button>
-      </div>
-    </div>
-  );
-}
+type Screen = 'home' | 'report' | 'game';
 
 function GameScreen({
-  game, stats, onLeave,
+  game, stats, records, onLeave, onDrill,
 }: {
-  game: ReturnType<typeof useGame>;
+  game: Game;
   stats: SessionStats;
+  records: HandRecord[];
   onLeave: () => void;
+  onDrill: (leakKey: string, personaKey: PersonaKey) => void;
 }) {
-  const { session, hand, phase, grades, gradesFailed } = game;
+  const { session, hand, phase, grades, gradesFailed, drill } = game;
   const [soundOn, setSoundOn] = useState(true);
   const [theaterOpen, setTheaterOpen] = useState(false);
 
@@ -128,6 +73,14 @@ function GameScreen({
   const personaName = session ? PERSONAS[session.personaKey].name : '';
   const matchOver = session?.matchOver ?? false;
 
+  const drillLabel = drill ? leakLabel(drill) : null;
+  const handGraded = phase === 'over' && grades !== null && !gradesFailed;
+  const recovered = drill && handGraded ? drillRecovered(records, drill) : false;
+
+  const handleNextDrill = () => {
+    if (drill && session) onDrill(drill, session.personaKey);
+  };
+
   return (
     <div className="game-screen">
       <header className="game-header">
@@ -151,6 +104,26 @@ function GameScreen({
           </button>
         </div>
       </header>
+
+      {drill && (
+        <div className="drill-banner">
+          <span className="drill-banner-label">Drilling: {drillLabel}</span>
+          {handGraded && (
+            recovered ? (
+              <>
+                <span className="drill-banner-status">Recovered — nice work.</span>
+                <button type="button" className="btn btn-gold" onClick={onLeave}>
+                  Back to coach
+                </button>
+              </>
+            ) : (
+              <button type="button" className="btn btn-ghost" onClick={handleNextDrill}>
+                Next drill
+              </button>
+            )
+          )}
+        </div>
+      )}
 
       <div className="game-main">
         <div className="game-table-col">
@@ -195,6 +168,31 @@ function App() {
   const [stats, setStats] = useState<SessionStats>(emptyStats());
   const counted = useRef(0);
 
+  const [screen, setScreen] = useState<Screen>('home');
+  const [store, setStore] = useState<ProfileStore | null>(null);
+  const [records, setRecords] = useState<HandRecord[]>([]);
+  const [drillNotice, setDrillNotice] = useState<string | null>(null);
+  const [viewingHand, setViewingHand] = useState<HandRecord | null>(null);
+  const persistedSeed = useRef<number | null>(null);
+  const noticeTimer = useRef<number | null>(null);
+
+  const refresh = useCallback(async (s: ProfileStore | null) => {
+    if (!s) return;
+    setRecords(await s.allHands());
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    openProfileStore().then(async (s) => {
+      if (!alive) return;
+      setStore(s);
+      await refresh(s);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [refresh]);
+
   useEffect(() => {
     if (game.grades && game.session && counted.current !== game.session.handNumber) {
       counted.current = game.session.handNumber;
@@ -203,15 +201,105 @@ function App() {
     }
   }, [game.grades, game.session]);
 
-  const handleLeave = () => {
-    window.location.reload();
-  };
+  // Persist every graded hand exactly once, keyed by the hand's deal seed.
+  // Hands whose grading failed are never persisted.
+  useEffect(() => {
+    if (!store || !game.grades || !game.hand?.result || !game.session) return;
+    const seed = game.hand.cfg.seed;
+    if (persistedSeed.current === seed) return;
+    persistedSeed.current = seed;
+    const rec = buildHandRecord(
+      game.hand,
+      0,
+      game.session.mode,
+      game.session.personaKey,
+      game.grades,
+      game.drill,
+    );
+    store.addHand(rec).then(() => refresh(store));
+  }, [store, game.grades, game.hand, game.session, game.drill, refresh]);
 
-  if (game.phase === 'menu') {
-    return <MenuScreen onStart={game.startSession} />;
+  const handleLeave = useCallback(() => {
+    setScreen('home');
+    void refresh(store);
+  }, [refresh, store]);
+
+  const handlePlay = useCallback(
+    (mode: Mode, personaKey: PersonaKey) => {
+      game.startSession(mode, personaKey);
+      setScreen('game');
+    },
+    [game],
+  );
+
+  const handleDrill = useCallback(
+    (key: string, personaKey: PersonaKey) => {
+      const deal = generateDrill(key, personaKey, Date.now() >>> 0);
+      if (!deal) {
+        setDrillNotice("Couldn't deal that spot right now — try again.");
+        if (noticeTimer.current) window.clearTimeout(noticeTimer.current);
+        noticeTimer.current = window.setTimeout(() => setDrillNotice(null), 4000);
+        return;
+      }
+      game.startDrill(personaKey, key, deal);
+      setScreen('game');
+    },
+    [game],
+  );
+
+  const handleOpenHand = useCallback(
+    (handId: number) => {
+      setViewingHand(records.find((r) => r.id === handId) ?? null);
+    },
+    [records],
+  );
+
+  const profileStats = useMemo(() => aggregate(records), [records]);
+  const coach = useMemo(() => coachState(profileStats, records), [profileStats, records]);
+
+  let content: ReactNode;
+  if (screen === 'home') {
+    content = (
+      <>
+        <CoachFeed
+          stats={profileStats}
+          coach={coach}
+          persistent={store ? store.persistent : true}
+          onPlay={handlePlay}
+          onDrill={handleDrill}
+          onReport={() => setScreen('report')}
+          onOpenHand={handleOpenHand}
+        />
+        {drillNotice && (
+          <p className="app-drill-notice" role="alert">
+            {drillNotice}
+          </p>
+        )}
+      </>
+    );
+  } else if (screen === 'report') {
+    content = (
+      <ReportCard stats={profileStats} onBack={() => setScreen('home')} onOpenHand={handleOpenHand} />
+    );
+  } else {
+    content = (
+      <GameScreen game={game} stats={stats} records={records} onLeave={handleLeave} onDrill={handleDrill} />
+    );
   }
 
-  return <GameScreen game={game} stats={stats} onLeave={handleLeave} />;
+  return (
+    <>
+      {content}
+      {viewingHand && (
+        <ReplayTheater
+          hand={viewingHand.state}
+          grades={viewingHand.grades}
+          personaName={PERSONAS[viewingHand.personaKey].name}
+          onClose={() => setViewingHand(null)}
+        />
+      )}
+    </>
+  );
 }
 
 export default App;
