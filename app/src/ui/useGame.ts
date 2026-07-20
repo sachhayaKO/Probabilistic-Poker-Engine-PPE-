@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Card } from '../engine/cards';
 import { mulberry32 } from '../engine/cards';
-import type { Action, HandState, LegalActions } from '../engine/hand';
+import type { Action, HandConfig, HandState, LegalActions } from '../engine/hand';
 import { applyAction, legalActions, startHand } from '../engine/hand';
 import { PERSONAS, personaAction } from '../personas/persona';
 import type { GradedDecision } from '../grading/gradeHand';
+import type { DrillDeal } from '../profile/drills';
 import type { GradeClient } from '../worker/gradeClient';
 import type { Mode, PersonaKey, Session } from './gameMachine';
 import { HERO_SEAT, VILLAIN_SEAT, applyHandResult, dealHand, newSession } from './gameMachine';
@@ -20,13 +21,16 @@ export interface Game {
   grades: GradedDecision[] | null; // null while pending or unavailable
   gradesFailed: boolean;
   race: { hero: number; villain: number } | null; // live equity during runouts
+  drill: string | null; // active drill leak key, null in normal play
   startSession: (mode: Mode, personaKey: PersonaKey) => void;
+  startDrill: (personaKey: PersonaKey, key: string, deal: DrillDeal) => void;
   act: (a: Action) => void;
   nextHand: () => void;
 }
 
 export const VILLAIN_DELAY_MS = 750;
 export const RUNOUT_STEP_MS = 1100;
+export const DRILL_SCRIPT_STEP_MS = 350;
 const GRADE_ITERATIONS = 800;
 const RACE_ITERATIONS = 400;
 
@@ -38,8 +42,10 @@ export function useGame(client: GradeClient): Game {
   const [grades, setGrades] = useState<GradedDecision[] | null>(null);
   const [gradesFailed, setGradesFailed] = useState(false);
   const [race, setRace] = useState<{ hero: number; villain: number } | null>(null);
+  const [drill, setDrill] = useState<string | null>(null);
   const villainRng = useRef<() => number>(mulberry32(1));
   const timers = useRef<number[]>([]);
+  const script = useRef<Action[]>([]);
 
   useEffect(
     () => () => {
@@ -127,10 +133,11 @@ export function useGame(client: GradeClient): Game {
     return () => clearTimeout(t);
   }, [hand, session, apply]);
 
-  const deal = useCallback((sess: Session) => {
-    const { session: s2, cfg } = dealHand(sess);
+  // Shared reset logic for a freshly dealt hand, used by both normal deals
+  // and drills (which start from a caller-supplied HandConfig verbatim).
+  const resetForHand = useCallback((sess: Session, cfg: HandConfig) => {
     villainRng.current = mulberry32((cfg.seed ^ 0x5bd1e995) >>> 0);
-    setSession(s2);
+    setSession(sess);
     setHand(startHand(cfg));
     setVisibleBoard([]);
     setEnded(null);
@@ -139,6 +146,16 @@ export function useGame(client: GradeClient): Game {
     setGradesFailed(false);
   }, []);
 
+  const deal = useCallback(
+    (sess: Session) => {
+      const { session: s2, cfg } = dealHand(sess);
+      resetForHand(s2, cfg);
+      script.current = [];
+      setDrill(null);
+    },
+    [resetForHand],
+  );
+
   const startSession = useCallback(
     (mode: Mode, personaKey: PersonaKey) => {
       deal(newSession(mode, personaKey, Date.now() >>> 0));
@@ -146,10 +163,32 @@ export function useGame(client: GradeClient): Game {
     [deal],
   );
 
+  const startDrill = useCallback(
+    (personaKey: PersonaKey, key: string, drillDeal: DrillDeal) => {
+      const sess: Session = { ...newSession('training', personaKey, drillDeal.cfg.seed), handNumber: 1 };
+      resetForHand(sess, drillDeal.cfg);
+      script.current = [...drillDeal.heroScript];
+      setDrill(key);
+    },
+    [resetForHand],
+  );
+
   const nextHand = useCallback(() => {
-    if (!session || phase !== 'over' || session.matchOver) return;
+    if (!session || phase !== 'over' || session.matchOver || drill) return;
     deal(session);
-  }, [session, phase, deal]);
+  }, [session, phase, deal, drill]);
+
+  // Drill script auto-play: fast-forward the scripted hero actions on a
+  // short delay, then hand control back once the script is exhausted.
+  useEffect(() => {
+    if (phase !== 'hero' || script.current.length === 0) return;
+    const t = window.setTimeout(() => {
+      const [a, ...rest] = script.current;
+      script.current = rest;
+      apply(a);
+    }, DRILL_SCRIPT_STEP_MS);
+    return () => clearTimeout(t);
+  }, [hand, phase, apply]);
 
   const act = useCallback(
     (a: Action) => {
@@ -159,7 +198,7 @@ export function useGame(client: GradeClient): Game {
   );
 
   return {
-    session, hand, visibleBoard, phase, legal, grades, gradesFailed, race,
-    startSession, act, nextHand,
+    session, hand, visibleBoard, phase, legal, grades, gradesFailed, race, drill,
+    startSession, startDrill, act, nextHand,
   };
 }
