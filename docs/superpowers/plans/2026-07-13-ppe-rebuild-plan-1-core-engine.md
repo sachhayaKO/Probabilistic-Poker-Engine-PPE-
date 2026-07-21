@@ -35,7 +35,7 @@
 - [ ] **Step 1: Scaffold and install**
 
 ```bash
-cd /Users/kimet/Documents/GitHub/Probabilistic-Poker-Engine-PPE-
+cd <repo-root>
 npm create vite@latest app -- --template react-ts
 cd app
 npm install

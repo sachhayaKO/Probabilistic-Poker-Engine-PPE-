@@ -1626,7 +1626,7 @@ export default function App() {
 
 In one terminal:
 ```bash
-cd /Users/kimet/Documents/GitHub/Probabilistic-Poker-Engine-PPE-
+cd <repo-root>
 uvicorn backend.app.main:app --reload
 ```
 
