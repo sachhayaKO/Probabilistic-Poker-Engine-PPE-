@@ -4,6 +4,7 @@ import type { ProfileStats } from '../profile/aggregate';
 import type { CoachCard } from '../profile/coach';
 import type { Mode, PersonaKey } from './gameMachine';
 import { SuitPip } from './SuitPip';
+import { GhostTable } from './GhostTable';
 import { PERSONA_KEYS, personaMeta } from './personaMeta';
 import './CoachFeed.css';
 
@@ -15,6 +16,7 @@ export interface CoachFeedProps {
   onDrill: (leakKey: string, personaKey: PersonaKey) => void;
   onReport: () => void;
   onOpenHand: (handId: number) => void;
+  onHome?: () => void;
 }
 
 function CoachHeadline({
@@ -109,12 +111,15 @@ export function CoachFeed({
   onDrill,
   onReport,
   onOpenHand,
+  onHome,
 }: CoachFeedProps) {
   const [mode, setMode] = useState<Mode>('training');
   const [personaKey, setPersonaKey] = useState<PersonaKey>('balanced');
+  const [randomBot, setRandomBot] = useState(false);
 
   return (
     <div className="coach-feed">
+      <GhostTable />
       <div className="coach-feed-inner">
       <header className="coach-feed-header coach-enter" style={{ '--stagger': 0 } as CSSProperties}>
         <h1 className="coach-feed-title">
@@ -124,9 +129,16 @@ export function CoachFeed({
           </span>
           Probabilistic Poker Engine <span className="coach-feed-flourish">Midnight Casino</span>
         </h1>
-        <button type="button" className="btn btn-gold" onClick={onReport}>
-          Report Card
-        </button>
+        <div className="coach-header-actions">
+          {onHome && (
+            <button type="button" className="btn btn-ghost" onClick={onHome}>
+              Home
+            </button>
+          )}
+          <button type="button" className="btn btn-gold" onClick={onReport}>
+            Report Card
+          </button>
+        </div>
       </header>
 
       {!persistent && (
@@ -218,12 +230,25 @@ export function CoachFeed({
               Match
             </label>
           </div>
+          <button
+            type="button"
+            className={`coach-random-toggle${randomBot ? ' coach-random-toggle-active' : ''}`}
+            aria-pressed={randomBot}
+            onClick={() => setRandomBot((r) => !r)}
+          >
+            <SuitPip suit="diamond" className="coach-random-pip" />
+            Random
+          </button>
         </div>
 
-        <div className="coach-persona-cards" role="radiogroup" aria-label="opponent">
+        <div
+          className={`coach-persona-cards${randomBot ? ' coach-persona-cards-random' : ''}`}
+          role="radiogroup"
+          aria-label="opponent"
+        >
           {PERSONA_KEYS.map((key) => {
             const m = personaMeta(key);
-            const selected = personaKey === key;
+            const selected = !randomBot && personaKey === key;
             const red = m.crest === 'heart' || m.crest === 'diamond';
             return (
               <label
@@ -235,7 +260,10 @@ export function CoachFeed({
                   name="coach-persona"
                   value={key}
                   checked={selected}
-                  onChange={() => setPersonaKey(key)}
+                  onChange={() => {
+                    setPersonaKey(key);
+                    setRandomBot(false);
+                  }}
                 />
                 <span className="coach-persona-head">
                   <SuitPip
@@ -266,7 +294,14 @@ export function CoachFeed({
         <button
           type="button"
           className="btn btn-gold coach-deal-btn"
-          onClick={() => onPlay(mode, personaKey)}
+          onClick={() =>
+            onPlay(
+              mode,
+              randomBot
+                ? PERSONA_KEYS[Math.floor(Math.random() * PERSONA_KEYS.length)]
+                : personaKey,
+            )
+          }
         >
           <SuitPip suit="diamond" className="coach-deal-pip" />
           Deal In

@@ -279,6 +279,7 @@ function App() {
           onDrill={handleDrill}
           onReport={() => setScreen('report')}
           onOpenHand={handleOpenHand}
+          onHome={() => setScreen('splash')}
         />
         {drillNotice && (
           <p className="app-drill-notice" role="alert">

@@ -1,4 +1,5 @@
 import { SuitPip } from './SuitPip';
+import { GhostTable } from './GhostTable';
 import './Splash.css';
 
 export interface SplashProps {
@@ -9,6 +10,7 @@ export interface SplashProps {
 export function Splash({ onEnter }: SplashProps) {
   return (
     <div className="splash" onClick={onEnter}>
+      <GhostTable />
       <div className="splash-stage">
         <div className="splash-card card card-back dealt" aria-hidden="true" />
         <h1 className="splash-title">

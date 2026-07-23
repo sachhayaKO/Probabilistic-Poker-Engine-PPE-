@@ -6,14 +6,17 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
+  /* The green felt now comes from the ghost table behind the stage;
+     keep only the low gold ambience and the base dark. */
   background:
-    radial-gradient(70% 55% at 50% 42%, rgba(18, 53, 36, 0.5), transparent 75%),
     radial-gradient(120% 90% at 50% 110%, rgba(201, 162, 39, 0.08), transparent 70%),
     var(--bg);
   cursor: pointer;
 }
 
 .splash-stage {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
