@@ -282,7 +282,12 @@ function App() {
     );
   } else if (screen === 'report') {
     content = (
-      <ReportCard stats={profileStats} onBack={() => setScreen('home')} onOpenHand={handleOpenHand} />
+      <ReportCard
+        stats={profileStats}
+        records={records}
+        onBack={() => setScreen('home')}
+        onOpenHand={handleOpenHand}
+      />
     );
   } else {
     content = (
