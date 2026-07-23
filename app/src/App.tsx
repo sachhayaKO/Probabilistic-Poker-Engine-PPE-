@@ -6,6 +6,7 @@ import { BIG_BLIND } from './ui/gameMachine';
 import { ActionBar } from './ui/ActionBar';
 import { Ribbon } from './ui/Ribbon';
 import { ReplayTheater } from './ui/ReplayTheater';
+import { Splash } from './ui/Splash';
 import { Table } from './ui/Table';
 import { emptyStats, accumulate } from './ui/stats';
 import type { SessionStats } from './ui/stats';
@@ -25,7 +26,7 @@ import { buildHandRecord } from './profile/records';
 import { leakLabel } from './profile/tags';
 import './App.css';
 
-type Screen = 'home' | 'report' | 'game';
+type Screen = 'splash' | 'home' | 'report' | 'game';
 
 function GameScreen({
   game, stats, records, onLeave, onDrill,
@@ -168,7 +169,7 @@ function App() {
   const [stats, setStats] = useState<SessionStats>(emptyStats());
   const counted = useRef(0);
 
-  const [screen, setScreen] = useState<Screen>('home');
+  const [screen, setScreen] = useState<Screen>('splash');
   const [store, setStore] = useState<ProfileStore | null>(null);
   const [records, setRecords] = useState<HandRecord[]>([]);
   const [drillNotice, setDrillNotice] = useState<string | null>(null);
@@ -258,7 +259,9 @@ function App() {
   const coach = useMemo(() => coachState(profileStats, records), [profileStats, records]);
 
   let content: ReactNode;
-  if (screen === 'home') {
+  if (screen === 'splash') {
+    content = <Splash onEnter={() => setScreen('home')} />;
+  } else if (screen === 'home') {
     content = (
       <>
         <CoachFeed
