@@ -434,43 +434,120 @@
   outline-offset: 2px;
 }
 
-/* Persona select */
-.coach-persona-select {
+/* Persona cards */
+.coach-persona-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.coach-persona-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--panel-edge);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+
+.coach-persona-card input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.coach-persona-card:hover {
+  border-color: rgba(201, 162, 39, 0.45);
+}
+
+.coach-persona-card:focus-within {
+  outline: 2px solid var(--gold-soft);
+  outline-offset: 2px;
+}
+
+.coach-persona-card-selected {
+  background:
+    radial-gradient(140% 120% at 50% 0%, var(--felt) 0%, var(--felt-dark) 80%);
+  border-color: var(--gold);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(201, 162, 39, 0.25);
+}
+
+.coach-persona-head {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
-  letter-spacing: 0.1em;
+}
+
+.coach-persona-crest {
+  width: 15px;
+  height: 15px;
+  color: var(--gold);
+  flex: none;
+}
+
+.coach-persona-crest-red {
+  color: var(--red-soft);
+}
+
+.coach-persona-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--cream);
+}
+
+.coach-persona-blurb {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.coach-persona-card-selected .coach-persona-blurb {
+  color: var(--cream);
+  opacity: 0.85;
+}
+
+.coach-persona-traits {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.coach-persona-trait {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.coach-persona-trait-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
-.coach-persona-select select {
-  min-height: 38px;
-  background: rgba(0, 0, 0, 0.35);
-  color: var(--cream);
-  border: 1px solid var(--panel-edge);
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-family: var(--font-body);
-  font-size: 14px;
-  letter-spacing: normal;
-  text-transform: none;
-  cursor: pointer;
-  transition: border-color 150ms ease;
+.coach-persona-trait-meter {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.45);
+  overflow: hidden;
 }
 
-.coach-persona-select select:hover,
-.coach-persona-select select:focus-visible {
-  border-color: var(--gold);
-  outline: none;
-}
-
-.coach-persona-blurb {
-  margin: 0;
-  font-size: 13px;
-  font-style: italic;
-  color: var(--muted);
+.coach-persona-trait-fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-soft));
 }
 
 /* Deal In */
@@ -532,12 +609,7 @@
     min-height: 44px;
   }
 
-  .coach-persona-select {
-    justify-content: space-between;
-  }
-
-  .coach-persona-select select {
-    flex: 1;
-    min-height: 44px;
+  .coach-persona-cards {
+    grid-template-columns: 1fr;
   }
 }

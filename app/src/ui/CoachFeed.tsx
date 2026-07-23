@@ -4,6 +4,7 @@ import type { ProfileStats } from '../profile/aggregate';
 import type { CoachCard } from '../profile/coach';
 import type { Mode, PersonaKey } from './gameMachine';
 import { SuitPip } from './SuitPip';
+import { PERSONA_KEYS, personaMeta } from './personaMeta';
 import './CoachFeed.css';
 
 export interface CoachFeedProps {
@@ -15,13 +16,6 @@ export interface CoachFeedProps {
   onReport: () => void;
   onOpenHand: (handId: number) => void;
 }
-
-const PERSONAS: { key: PersonaKey; label: string; blurb: string }[] = [
-  { key: 'nit', label: 'The Nit', blurb: 'Tight, cautious, folds too much' },
-  { key: 'maniac', label: 'The Maniac', blurb: 'Raises everything, relentless' },
-  { key: 'station', label: 'The Calling Station', blurb: 'Never folds, never raises' },
-  { key: 'balanced', label: 'The Balanced Player', blurb: 'Solid, hard to exploit' },
-];
 
 function CoachHeadline({
   coach,
@@ -118,7 +112,6 @@ export function CoachFeed({
 }: CoachFeedProps) {
   const [mode, setMode] = useState<Mode>('training');
   const [personaKey, setPersonaKey] = useState<PersonaKey>('balanced');
-  const persona = PERSONAS.find((p) => p.key === personaKey) ?? PERSONAS[3];
 
   return (
     <div className="coach-feed">
@@ -225,23 +218,50 @@ export function CoachFeed({
               Match
             </label>
           </div>
-
-          <label className="coach-persona-select">
-            Persona
-            <select
-              value={personaKey}
-              onChange={(e) => setPersonaKey(e.target.value as PersonaKey)}
-            >
-              {PERSONAS.map((p) => (
-                <option key={p.key} value={p.key}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-          </label>
         </div>
 
-        <p className="coach-persona-blurb">{persona.blurb}</p>
+        <div className="coach-persona-cards" role="radiogroup" aria-label="opponent">
+          {PERSONA_KEYS.map((key) => {
+            const m = personaMeta(key);
+            const selected = personaKey === key;
+            const red = m.crest === 'heart' || m.crest === 'diamond';
+            return (
+              <label
+                key={key}
+                className={`coach-persona-card${selected ? ' coach-persona-card-selected' : ''}`}
+              >
+                <input
+                  type="radio"
+                  name="coach-persona"
+                  value={key}
+                  checked={selected}
+                  onChange={() => setPersonaKey(key)}
+                />
+                <span className="coach-persona-head">
+                  <SuitPip
+                    suit={m.crest}
+                    className={`coach-persona-crest${red ? ' coach-persona-crest-red' : ''}`}
+                  />
+                  <span className="coach-persona-name">{m.name}</span>
+                </span>
+                <span className="coach-persona-blurb">{m.blurb}</span>
+                <span className="coach-persona-traits">
+                  {m.traits.map((t) => (
+                    <span key={t.label} className="coach-persona-trait">
+                      <span className="coach-persona-trait-label">{t.label}</span>
+                      <span className="coach-persona-trait-meter">
+                        <span
+                          className="coach-persona-trait-fill"
+                          style={{ width: `${Math.round(t.value * 100)}%` }}
+                        />
+                      </span>
+                    </span>
+                  ))}
+                </span>
+              </label>
+            );
+          })}
+        </div>
 
         <button
           type="button"

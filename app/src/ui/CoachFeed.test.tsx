@@ -133,9 +133,34 @@ describe('CoachFeed', () => {
     expect(onPlay).toHaveBeenCalledWith('training', 'balanced');
 
     fireEvent.click(screen.getByRole('radio', { name: /match/i }));
-    fireEvent.change(screen.getByLabelText(/persona/i), { target: { value: 'maniac' } });
+    fireEvent.click(screen.getByRole('radio', { name: /the maniac/i }));
     fireEvent.click(screen.getByRole('button', { name: /deal in/i }));
     expect(onPlay).toHaveBeenCalledWith('match', 'maniac');
+  });
+
+  it('(f) renders all four persona cards with descriptions', () => {
+    render(
+      <CoachFeed
+        stats={makeStats()}
+        coach={makeCoach()}
+        persistent={true}
+        onPlay={noop}
+        onDrill={noop}
+        onReport={noop}
+        onOpenHand={noop}
+      />,
+    );
+
+    const group = screen.getByRole('radiogroup', { name: 'opponent' });
+    expect(group).toBeTruthy();
+    for (const name of [/the nit/i, /the maniac/i, /the calling station/i, /the balanced player/i]) {
+      expect(screen.getByRole('radio', { name })).toBeTruthy();
+    }
+    expect(screen.getByText(/plays only premium hands/i)).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /the balanced player/i })).toHaveProperty(
+      'checked',
+      true,
+    );
   });
 
   it('(e) Report Card button calls onReport', () => {
