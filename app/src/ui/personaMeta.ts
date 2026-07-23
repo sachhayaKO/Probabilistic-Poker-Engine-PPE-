@@ -1,15 +1,16 @@
-import type { Suit } from './SuitPip';
 import { PERSONAS } from '../personas/persona';
+import type { PersonaKey } from './gameMachine';
+import type { Suit } from './SuitPip';
 
-export type PersonaMeta = {
+export interface PersonaMeta {
+  key: PersonaKey;
   name: string;
   crest: Suit;
-  traits: { label: string; value: number }[];
   blurb: string;
-};
+  traits: { label: string; value: number }[]; // values in [0, 1]
+}
 
-export const PERSONA_KEYS = ['nit', 'maniac', 'station', 'balanced'] as const;
-export type PersonaKey = (typeof PERSONA_KEYS)[number];
+export const PERSONA_KEYS: PersonaKey[] = ['nit', 'maniac', 'station', 'balanced'];
 
 const CRESTS: Record<PersonaKey, Suit> = {
   nit: 'spade',
@@ -19,22 +20,26 @@ const CRESTS: Record<PersonaKey, Suit> = {
 };
 
 const BLURBS: Record<PersonaKey, string> = {
-  nit: 'Tight, cautious, folds too much',
-  maniac: 'Raises everything, relentless',
-  station: 'Never folds, never raises',
-  balanced: 'Solid, hard to exploit',
+  nit: 'Plays only premium hands and folds under pressure. Steal his blinds relentlessly — but when he raises, believe him.',
+  maniac:
+    'Raises with almost anything and never slows down. Tighten up, call down with real hands, and let him hang himself.',
+  station:
+    "Calls everything, folds nothing, rarely raises. Value-bet thin and never bluff — he's paying you off.",
+  balanced:
+    'Solid, aggressive in the right spots, hard to exploit. Play fundamentally sound poker to beat him.',
 };
 
 export function personaMeta(key: PersonaKey): PersonaMeta {
-  const params = PERSONAS[key];
+  const p = PERSONAS[key];
   return {
-    name: params.name,
+    key,
+    name: p.name,
     crest: CRESTS[key],
-    traits: [
-      { label: 'Looseness', value: params.preflopRange },
-      { label: 'Aggression', value: params.aggression },
-      { label: 'Stubbornness', value: 1 - params.foldToRaise },
-    ],
     blurb: BLURBS[key],
+    traits: [
+      { label: 'Looseness', value: p.preflopRange },
+      { label: 'Aggression', value: p.aggression },
+      { label: 'Stubbornness', value: 1 - p.foldToRaise },
+    ],
   };
 }
