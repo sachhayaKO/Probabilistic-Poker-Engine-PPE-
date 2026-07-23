@@ -52,6 +52,30 @@
   font-size: 16px;
 }
 
+.btn-sound {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 38px;
+  color: var(--muted);
+  transition: color 150ms ease, border-color 150ms ease;
+}
+
+.btn-sound:hover:not(:disabled) {
+  color: var(--cream);
+}
+
+.btn-sound-on {
+  color: var(--gold-soft);
+  border-color: rgba(201, 162, 39, 0.45);
+}
+
+.btn-sound-on:hover:not(:disabled) {
+  color: var(--gold-soft);
+  box-shadow: 0 0 10px rgba(201, 162, 39, 0.25);
+}
+
 /* ── Menu screen ───────────────────────────────────────────────── */
 .menu-screen {
   position: relative;

@@ -21,8 +21,9 @@ const grades: GradedDecision[] = [
 describe('Ribbon', () => {
   it('shows graded lines with symbols and EV lost', () => {
     render(<Ribbon grades={grades} gradesFailed={false} stats={stats} phase="over" matchOver={false} onOpenTheater={() => {}} />);
-    expect(screen.getByText(/✓/)).toBeTruthy();
-    expect(screen.getByText(/✗/)).toBeTruthy();
+    // symbols appear in both the verdict-summary chips and the per-decision badges
+    expect(screen.getAllByText(/✓/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/✗/).length).toBeGreaterThan(0);
     expect(screen.getByText(/−180/)).toBeTruthy();
     expect(screen.getByText(/75%/)).toBeTruthy(); // (2+1)/4 accuracy
   });

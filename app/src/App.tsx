@@ -6,6 +6,7 @@ import { BIG_BLIND } from './ui/gameMachine';
 import { ActionBar } from './ui/ActionBar';
 import { Ribbon } from './ui/Ribbon';
 import { ReplayTheater } from './ui/ReplayTheater';
+import { SoundIcon } from './ui/SoundIcon';
 import { Splash } from './ui/Splash';
 import { Table } from './ui/Table';
 import { emptyStats, accumulate } from './ui/stats';
@@ -97,8 +98,14 @@ function GameScreen({
           <span className="game-header-stack">
             {personaName}: {session ? (session.stacks[1] / BIG_BLIND).toFixed(1) : '0.0'} BB
           </span>
-          <button type="button" className="btn btn-icon" onClick={toggleSound} aria-label="toggle sound">
-            {soundOn ? '🔊' : '🔇'}
+          <button
+            type="button"
+            className={`btn btn-icon btn-sound${soundOn ? ' btn-sound-on' : ''}`}
+            onClick={toggleSound}
+            aria-label="toggle sound"
+            aria-pressed={soundOn}
+          >
+            <SoundIcon on={soundOn} />
           </button>
           <button type="button" className="btn btn-ghost" onClick={onLeave}>
             Leave table

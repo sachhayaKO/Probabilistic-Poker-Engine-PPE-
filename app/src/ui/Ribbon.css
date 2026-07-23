@@ -1,34 +1,79 @@
 /* ── Side ribbon: end-of-hand review panel ───────────────────────── */
 .ribbon {
-  width: 320px;
-  min-width: 320px;
-  height: 100%;
+  width: 340px;
+  min-width: 340px;
+  align-self: stretch;
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 18px 16px;
-  background: var(--panel);
+  background:
+    radial-gradient(140% 60% at 50% 0%, rgba(18, 53, 36, 0.35), transparent 70%),
+    var(--panel);
   border: 1px solid var(--panel-edge);
-  border-radius: 8px;
+  border-radius: 10px;
   box-sizing: border-box;
   color: var(--cream);
+  box-shadow: inset 0 1px 0 rgba(243, 234, 215, 0.04);
 }
 
 .ribbon-header {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--gold);
-  letter-spacing: 0.04em;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--gold-soft);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+/* ── Accuracy gauge + session stats ─────────────────────────────── */
+.ribbon-gauge-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--panel-edge);
+}
+
+.ribbon-ring {
+  width: 72px;
+  height: 72px;
+  flex: none;
+}
+
+.ribbon-ring-track {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.45);
+  stroke-width: 5;
+}
+
+.ribbon-ring-fill {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 5;
+  stroke-linecap: round;
+  transition: stroke-dasharray 400ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.ribbon-ring-value {
+  fill: var(--cream);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.ribbon-ring-label {
+  fill: var(--muted);
+  font-family: var(--font-body);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .ribbon-stats {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 8px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--panel-edge);
 }
 
 .ribbon-stat {
@@ -36,21 +81,56 @@
   font-size: 12px;
   color: var(--muted);
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
+  align-items: baseline;
+  gap: 6px;
 }
 
 .ribbon-stat-value {
   font-family: var(--font-mono);
-  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  font-size: 17px;
   color: var(--cream);
 }
 
+/* ── Body ───────────────────────────────────────────────────────── */
 .ribbon-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ribbon-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+  padding: 12px;
+}
+
+.ribbon-empty-cards {
+  display: flex;
+}
+
+.ribbon-empty-card {
+  width: 34px;
+  height: 48px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px dashed rgba(201, 162, 39, 0.3);
+}
+
+.ribbon-empty-card:first-child {
+  transform: rotate(-8deg) translateX(4px);
+}
+
+.ribbon-empty-card:last-child {
+  transform: rotate(8deg) translateX(-4px);
 }
 
 .ribbon-hint,
@@ -59,66 +139,206 @@
   font-size: 13px;
   color: var(--muted);
   font-style: italic;
+  margin: 0;
 }
 
 .ribbon-warning {
   font-family: var(--font-body);
   font-size: 13px;
   color: var(--red);
+  margin: 0;
 }
 
+/* Verdict summary chips */
+.ribbon-verdict-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ribbon-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--panel-edge);
+  color: var(--muted);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.ribbon-chip-symbol {
+  font-size: 12px;
+}
+
+.ribbon-chip-best {
+  border-color: rgba(127, 176, 105, 0.5);
+  color: var(--good);
+}
+
+.ribbon-chip-okay {
+  border-color: rgba(230, 201, 104, 0.4);
+  color: var(--gold-soft);
+}
+
+.ribbon-chip-mistake {
+  border-color: rgba(196, 83, 106, 0.55);
+  color: var(--red-soft);
+}
+
+/* Decision timeline */
 .ribbon-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
 }
 
 .ribbon-line {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 6px 8px 2px;
+}
+
+/* connecting timeline rail */
+.ribbon-line::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 30px;
+  bottom: -4px;
+  width: 1px;
+  background: var(--panel-edge);
+}
+
+.ribbon-line:last-child::before {
+  display: none;
+}
+
+.ribbon-verdict {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 1px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--panel-edge);
+  position: relative;
+  z-index: 1;
+}
+
+.ribbon-verdict-best {
+  color: var(--good);
+  border-color: rgba(127, 176, 105, 0.6);
+}
+
+.ribbon-verdict-okay {
+  color: var(--gold-soft);
+  border-color: rgba(230, 201, 104, 0.5);
+}
+
+.ribbon-verdict-mistake {
+  color: #fff;
+  background: var(--red);
+  border-color: var(--red);
+}
+
+.ribbon-line-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ribbon-line-top {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  padding: 4px 6px;
-  border-left: 3px solid transparent;
-  font-family: var(--font-body);
-  font-size: 13px;
-}
-
-.ribbon-line-mistake {
-  border-left-color: var(--red);
-}
-
-.ribbon-symbol-good {
-  color: var(--good);
-}
-
-.ribbon-symbol-okay {
-  color: var(--gold-soft);
-}
-
-.ribbon-symbol-mistake {
-  color: var(--red);
+  flex-wrap: wrap;
 }
 
 .ribbon-street {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   min-width: 42px;
 }
 
 .ribbon-text {
   color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+
+.ribbon-action {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--cream);
+}
+
+.ribbon-action-best {
+  color: var(--gold-soft);
+}
+
+.ribbon-line-mistake .ribbon-text {
+  color: var(--red-soft);
+}
+
+.ribbon-line-mistake .ribbon-action {
+  color: var(--red-soft);
+}
+
+/* EV-lost bar */
+.ribbon-evbar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ribbon-evbar {
+  flex: 1;
+  max-width: 150px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.ribbon-evbar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--red), var(--red-soft));
 }
 
 .ribbon-evlost {
-  color: var(--red);
+  color: var(--red-soft);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
 }
 
+.ribbon-hand-ev {
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--panel-edge);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ── Footer ─────────────────────────────────────────────────────── */
 .ribbon-footer {
   display: flex;
   flex-direction: column;
@@ -128,9 +348,23 @@
   border-top: 1px solid var(--panel-edge);
 }
 
+.ribbon-footer .btn {
+  width: 100%;
+  min-height: 44px;
+}
+
 .ribbon-hint-next {
   margin: 0;
   font-family: var(--font-body);
   font-size: 12px;
   color: var(--muted);
+}
+
+/* ── Stacked layout: ribbon becomes the lower half ──────────────── */
+@media (max-width: 1024px) {
+  .ribbon {
+    width: 100%;
+    min-width: 0;
+    min-height: 44svh;
+  }
 }
