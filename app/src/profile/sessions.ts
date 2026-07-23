@@ -1,78 +1,76 @@
-import type { HandRecord, StoredDecision } from './records';
+import type { Mode, PersonaKey } from '../ui/gameMachine';
+import type { HandRecord } from './records';
 
-export const SESSION_GAP_MS = 30 * 60 * 1000; // 30 minutes
+/** Hands further apart than this start a new session. */
+export const SESSION_GAP_MS = 30 * 60_000;
 
-export interface Session {
-  start: number;
-  end: number;
-  mode: string;
-  personaKey: string;
-  drill: string | null;
+export interface SessionSummary {
+  start: number; // ts of first hand
+  end: number; // ts of last hand
+  mode: Mode;
+  personaKey: PersonaKey;
+  drill: string | null; // leak key for drill sessions, null for play
   handCount: number;
   netChips: number;
   netBB: number;
+  accuracy: number; // 1 when the session has no graded decisions
   mistakes: number;
-  accuracy: number;
-  handIds: number[];
+  handIds: number[]; // chronological; hands without a store id are skipped
 }
 
-export function groupSessions(records: HandRecord[]): Session[] {
-  if (records.length === 0) return [];
+function sameSession(prev: HandRecord, next: HandRecord): boolean {
+  return (
+    prev.mode === next.mode &&
+    prev.personaKey === next.personaKey &&
+    prev.drill === next.drill &&
+    next.ts - prev.ts <= SESSION_GAP_MS
+  );
+}
 
-  // Sort by ts ascending, then group
-  const sorted = [...records].sort((a, b) => a.ts - b.ts);
-
-  const groups: HandRecord[][] = [];
-  let currentGroup: HandRecord[] = [sorted[0]];
-
-  for (let i = 1; i < sorted.length; i++) {
-    const prev = sorted[i - 1];
-    const curr = sorted[i];
-    // Split if: gap > SESSION_GAP_MS, or any group key changed
-    const gapExceeds = curr.ts - prev.ts > SESSION_GAP_MS;
-    const keyChanged =
-      prev.personaKey !== curr.personaKey ||
-      prev.mode !== curr.mode ||
-      prev.drill !== curr.drill;
-
-    if (gapExceeds || keyChanged) {
-      groups.push(currentGroup);
-      currentGroup = [curr];
-    } else {
-      currentGroup.push(curr);
+function summarize(bucket: HandRecord[]): SessionSummary {
+  let decisions = 0;
+  let good = 0;
+  let mistakes = 0;
+  let netChips = 0;
+  let netBB = 0;
+  const handIds: number[] = [];
+  for (const r of bucket) {
+    netChips += r.heroNet;
+    netBB += r.heroNet / r.bigBlind;
+    if (r.id !== undefined) handIds.push(r.id);
+    for (const d of r.decisions) {
+      decisions++;
+      if (d.label === 'mistake') mistakes++;
+      else good++;
     }
   }
-  groups.push(currentGroup);
+  return {
+    start: bucket[0].ts,
+    end: bucket[bucket.length - 1].ts,
+    mode: bucket[0].mode,
+    personaKey: bucket[0].personaKey,
+    drill: bucket[0].drill,
+    handCount: bucket.length,
+    netChips,
+    netBB,
+    accuracy: decisions === 0 ? 1 : good / decisions,
+    mistakes,
+    handIds,
+  };
+}
 
-  // Convert to sessions and reverse (newest-first)
-  const sessions = groups.map((group) => {
-    const handIds = group.map((h) => h.id).filter((id) => id !== undefined);
-    const netChips = group.reduce((sum, h) => sum + h.heroNet, 0);
-    const totalDecisions = group.reduce((sum, h) => sum + h.decisions.length, 0);
-    const mistakes = group.reduce((sum, h) => {
-      return (
-        sum +
-        h.decisions.filter((d: StoredDecision) => d.label === 'mistake').length
-      );
-    }, 0);
-    const accuracy =
-      totalDecisions === 0 ? 1 : (totalDecisions - mistakes) / totalDecisions;
-    const netBB = netChips / group[0].bigBlind;
-
-    return {
-      start: group[0].ts,
-      end: group[group.length - 1].ts,
-      mode: group[0].mode,
-      personaKey: group[0].personaKey,
-      drill: group[0].drill,
-      handCount: group.length,
-      netChips,
-      netBB,
-      mistakes,
-      accuracy,
-      handIds,
-    } as Session;
-  });
-
+/** Groups stored hands into sessions, newest session first. */
+export function groupSessions(records: HandRecord[]): SessionSummary[] {
+  const sorted = [...records].sort((a, b) => a.ts - b.ts);
+  const sessions: SessionSummary[] = [];
+  let bucket: HandRecord[] = [];
+  for (const r of sorted) {
+    if (bucket.length > 0 && !sameSession(bucket[bucket.length - 1], r)) {
+      sessions.push(summarize(bucket));
+      bucket = [];
+    }
+    bucket.push(r);
+  }
+  if (bucket.length > 0) sessions.push(summarize(bucket));
   return sessions.reverse();
 }
