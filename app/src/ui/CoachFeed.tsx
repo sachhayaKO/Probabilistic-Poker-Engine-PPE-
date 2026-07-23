@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { CSSProperties } from 'react';
 import type { ProfileStats } from '../profile/aggregate';
 import type { CoachCard } from '../profile/coach';
 import type { Mode, PersonaKey } from './gameMachine';
@@ -14,12 +15,30 @@ export interface CoachFeedProps {
   onOpenHand: (handId: number) => void;
 }
 
-const PERSONAS: { key: PersonaKey; label: string }[] = [
-  { key: 'nit', label: 'The Nit' },
-  { key: 'maniac', label: 'The Maniac' },
-  { key: 'station', label: 'The Calling Station' },
-  { key: 'balanced', label: 'The Balanced Player' },
+const PERSONAS: { key: PersonaKey; label: string; blurb: string }[] = [
+  { key: 'nit', label: 'The Nit', blurb: 'Tight, cautious, folds too much' },
+  { key: 'maniac', label: 'The Maniac', blurb: 'Raises everything, relentless' },
+  { key: 'station', label: 'The Calling Station', blurb: 'Never folds, never raises' },
+  { key: 'balanced', label: 'The Balanced Player', blurb: 'Solid, hard to exploit' },
 ];
+
+/* Vector suit pips — decorative, consistent stroke-free glyph family */
+function SuitPip({ suit, className }: { suit: 'spade' | 'heart' | 'diamond' | 'club'; className?: string }) {
+  const paths: Record<string, string> = {
+    spade:
+      'M12 2C9 7 4 10 4 14a4 4 0 0 0 7 2.6c-.2 1.8-.8 3.2-2 4.4h6c-1.2-1.2-1.8-2.6-2-4.4A4 4 0 0 0 20 14c0-4-5-7-8-12z',
+    heart:
+      'M12 21c-5.5-4.5-9-7.8-9-11.5A4.5 4.5 0 0 1 12 6.6 4.5 4.5 0 0 1 21 9.5C21 13.2 17.5 16.5 12 21z',
+    diamond: 'M12 2l6.5 10L12 22 5.5 12 12 2z',
+    club:
+      'M12 2a4 4 0 0 0-3.2 6.4 4 4 0 1 0 2.2 7c-.2 2-.8 3.4-2 4.6h6c-1.2-1.2-1.8-2.6-2-4.6a4 4 0 1 0 2.2-7A4 4 0 0 0 12 2z',
+  };
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" focusable="false">
+      <path d={paths[suit]} fill="currentColor" />
+    </svg>
+  );
+}
 
 function CoachHeadline({
   coach,
@@ -37,8 +56,12 @@ function CoachHeadline({
   if (coach.leak) {
     const leak = coach.leak;
     return (
-      <div className="coach-card">
-        <h2 className="coach-card-heading">Your biggest leak</h2>
+      <div className="coach-card coach-card-leak">
+        <div className="coach-card-inlay" aria-hidden="true" />
+        <h2 className="coach-card-heading">
+          <SuitPip suit="spade" className="coach-heading-pip" />
+          Your biggest leak
+        </h2>
         <p className="coach-leak-label">{leak.label}</p>
         <p className="coach-leak-evidence">
           {Math.round(leak.evLost)} chips lost (est.) over {leak.mistakes} mistakes
@@ -71,6 +94,7 @@ function CoachHeadline({
   if (handsGraded > 0) {
     return (
       <div className="coach-card">
+        <div className="coach-card-inlay" aria-hidden="true" />
         <p className="coach-positive-copy">
           No leaks big enough to name yet — keep playing to sharpen the picture.
         </p>
@@ -79,7 +103,19 @@ function CoachHeadline({
   }
 
   return (
-    <div className="coach-card">
+    <div className="coach-card coach-card-welcome">
+      <div className="coach-card-inlay" aria-hidden="true" />
+      <div className="coach-welcome-fan" aria-hidden="true">
+        <span className="coach-fan-card coach-fan-left">
+          <SuitPip suit="heart" className="coach-fan-pip coach-fan-pip-red" />
+        </span>
+        <span className="coach-fan-card coach-fan-mid">
+          <SuitPip suit="spade" className="coach-fan-pip" />
+        </span>
+        <span className="coach-fan-card coach-fan-right">
+          <SuitPip suit="diamond" className="coach-fan-pip coach-fan-pip-red" />
+        </span>
+      </div>
       <p className="coach-welcome-copy">
         Welcome to the tables — play your first session and the coach will start tracking your
         game.
@@ -99,11 +135,17 @@ export function CoachFeed({
 }: CoachFeedProps) {
   const [mode, setMode] = useState<Mode>('training');
   const [personaKey, setPersonaKey] = useState<PersonaKey>('balanced');
+  const persona = PERSONAS.find((p) => p.key === personaKey) ?? PERSONAS[3];
 
   return (
     <div className="coach-feed">
-      <header className="coach-feed-header">
+      <div className="coach-feed-inner">
+      <header className="coach-feed-header coach-enter" style={{ '--stagger': 0 } as CSSProperties}>
         <h1 className="coach-feed-title">
+          <span className="coach-title-pips" aria-hidden="true">
+            <SuitPip suit="spade" className="coach-title-pip" />
+            <SuitPip suit="heart" className="coach-title-pip coach-title-pip-red" />
+          </span>
           Probabilistic Poker Engine <span className="coach-feed-flourish">Midnight Casino</span>
         </h1>
         <button type="button" className="btn btn-gold" onClick={onReport}>
@@ -117,16 +159,35 @@ export function CoachFeed({
         </p>
       )}
 
-      <CoachHeadline
-        coach={coach}
-        personaKey={personaKey}
-        onDrill={onDrill}
-        onOpenHand={onOpenHand}
-        handsGraded={stats.handsGraded}
-      />
+      {stats.handsGraded > 0 && (
+        <dl className="coach-stat-strip coach-enter" style={{ '--stagger': 1 } as CSSProperties}>
+          <div className="coach-stat">
+            <dt>Hands graded</dt>
+            <dd>{stats.handsGraded}</dd>
+          </div>
+          <div className="coach-stat">
+            <dt>Decision accuracy</dt>
+            <dd>{Math.round(stats.accuracy * 100)}%</dd>
+          </div>
+          <div className="coach-stat">
+            <dt>bb / 100</dt>
+            <dd>{stats.bb100 >= 0 ? '+' : ''}{stats.bb100.toFixed(1)}</dd>
+          </div>
+        </dl>
+      )}
+
+      <div className="coach-enter" style={{ '--stagger': 2 } as CSSProperties}>
+        <CoachHeadline
+          coach={coach}
+          personaKey={personaKey}
+          onDrill={onDrill}
+          onOpenHand={onOpenHand}
+          handsGraded={stats.handsGraded}
+        />
+      </div>
 
       {coach.queue.length > 0 && (
-        <section className="coach-section">
+        <section className="coach-section coach-enter" style={{ '--stagger': 3 } as CSSProperties}>
           <h2 className="coach-section-title">Next focus</h2>
           <ul className="coach-queue-list">
             {coach.queue.map((leak) => (
@@ -137,7 +198,7 @@ export function CoachFeed({
       )}
 
       {coach.graduated.length > 0 && (
-        <section className="coach-section">
+        <section className="coach-section coach-enter" style={{ '--stagger': 4 } as CSSProperties}>
           <h2 className="coach-section-title">Graduated</h2>
           <ul className="coach-graduated-list">
             {coach.graduated.map((g) => (
@@ -151,55 +212,64 @@ export function CoachFeed({
       )}
 
       {coach.streak >= 3 && (
-        <p className="coach-streak">{coach.streak}-decision clean-decision streak</p>
+        <p className="coach-streak coach-enter" style={{ '--stagger': 5 } as CSSProperties}>
+          <SuitPip suit="club" className="coach-streak-pip" />
+          {coach.streak}-decision clean-decision streak
+        </p>
       )}
 
-      <section className="coach-play-controls">
-        <div className="coach-mode-toggle" role="radiogroup" aria-label="mode">
-          <label className="coach-radio">
-            <input
-              type="radio"
-              name="coach-mode"
-              value="training"
-              checked={mode === 'training'}
-              onChange={() => setMode('training')}
-            />
-            Training
-          </label>
-          <label className="coach-radio">
-            <input
-              type="radio"
-              name="coach-mode"
-              value="match"
-              checked={mode === 'match'}
-              onChange={() => setMode('match')}
-            />
-            Match
+      <section className="coach-play-controls coach-enter" style={{ '--stagger': 6 } as CSSProperties}>
+        <div className="coach-controls-row">
+          <div className="coach-mode-toggle" role="radiogroup" aria-label="mode">
+            <label className={`coach-radio${mode === 'training' ? ' coach-radio-active' : ''}`}>
+              <input
+                type="radio"
+                name="coach-mode"
+                value="training"
+                checked={mode === 'training'}
+                onChange={() => setMode('training')}
+              />
+              Training
+            </label>
+            <label className={`coach-radio${mode === 'match' ? ' coach-radio-active' : ''}`}>
+              <input
+                type="radio"
+                name="coach-mode"
+                value="match"
+                checked={mode === 'match'}
+                onChange={() => setMode('match')}
+              />
+              Match
+            </label>
+          </div>
+
+          <label className="coach-persona-select">
+            Persona
+            <select
+              value={personaKey}
+              onChange={(e) => setPersonaKey(e.target.value as PersonaKey)}
+            >
+              {PERSONAS.map((p) => (
+                <option key={p.key} value={p.key}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
 
-        <label className="coach-persona-select">
-          Persona
-          <select
-            value={personaKey}
-            onChange={(e) => setPersonaKey(e.target.value as PersonaKey)}
-          >
-            {PERSONAS.map((p) => (
-              <option key={p.key} value={p.key}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <p className="coach-persona-blurb">{persona.blurb}</p>
 
         <button
           type="button"
           className="btn btn-gold coach-deal-btn"
           onClick={() => onPlay(mode, personaKey)}
         >
+          <SuitPip suit="diamond" className="coach-deal-pip" />
           Deal In
         </button>
       </section>
+      </div>
     </div>
   );
 }
