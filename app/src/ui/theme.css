@@ -18,6 +18,121 @@
   --font-mono: 'SF Mono', Menlo, Consolas, monospace;
 }
 
+/* ── Ghost Table ───────────────────────────────────────────────────
+   The faded table under the lounge screens: a barely-there felt oval
+   with a gold rail arc, fixed behind the splash and coach dashboard.
+   Siblings that should sit above it need position + z-index: 1. */
+.ghost-table {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  --mx: 50vw;
+  --my: 40vh;
+  --nx: 0;
+  --ny: 0;
+}
+
+/* Rail + felt: a huge ellipse whose top arc crosses mid-screen, as if
+   seated at the table's edge looking across it. */
+.ghost-table::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 32%;
+  width: 180vmax;
+  height: 130vmax;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 14px solid rgba(201, 162, 39, 0.14);
+  background:
+    radial-gradient(closest-side at 50% 12%, rgba(230, 201, 104, 0.09), transparent 58%),
+    linear-gradient(rgba(18, 53, 36, 0.55), rgba(11, 35, 24, 0.28) 45%, transparent 85%);
+  box-shadow: inset 0 30px 90px rgba(0, 0, 0, 0.5);
+}
+
+/* Betting line: one hairline inset from the rail. */
+.ghost-table::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: calc(32% + 8vmax);
+  width: 152vmax;
+  height: 110vmax;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 1px solid rgba(230, 201, 104, 0.17);
+}
+
+/* Parallax layer: pips + dealt cards drift a touch against the mouse. */
+.ghost-drift {
+  position: absolute;
+  inset: 0;
+  transform: translate(calc(var(--nx) * -22px), calc(var(--ny) * -16px));
+}
+
+/* Drifting suit watermarks around the viewport edges. */
+.ghost-pip {
+  position: absolute;
+  color: rgba(230, 201, 104, 0.13);
+  animation: ghost-float 15s ease-in-out infinite alternate;
+}
+
+.ghost-pip-red {
+  color: rgba(196, 83, 106, 0.13);
+}
+
+.ghost-pip svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes ghost-float {
+  from {
+    transform: translateY(-9px) rotate(-6deg);
+  }
+  to {
+    transform: translateY(11px) rotate(5deg);
+  }
+}
+
+/* Face-down cards resting on the felt, fanned like a waiting flop. */
+.ghost-card-outline {
+  position: absolute;
+  width: 58px;
+  height: 84px;
+  border-radius: 7px;
+  border: 1px solid rgba(230, 201, 104, 0.16);
+  background: linear-gradient(160deg, rgba(230, 201, 104, 0.06), transparent 70%);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+/* Candle-glow spotlight that trails the cursor across the felt. */
+.ghost-glow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 58vmax;
+  height: 58vmax;
+  transform: translate(calc(var(--mx) - 50%), calc(var(--my) - 50%));
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgba(230, 201, 104, 0.11),
+    rgba(230, 201, 104, 0.045) 42%,
+    transparent 72%
+  );
+  mix-blend-mode: screen;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ghost-pip {
+    animation: none;
+  }
+}
+
 /* ── Cards ─────────────────────────────────────────────────────── */
 .card {
   width: 64px;

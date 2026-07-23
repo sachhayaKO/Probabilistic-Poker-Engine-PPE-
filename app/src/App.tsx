@@ -6,6 +6,8 @@ import { BIG_BLIND } from './ui/gameMachine';
 import { ActionBar } from './ui/ActionBar';
 import { Ribbon } from './ui/Ribbon';
 import { ReplayTheater } from './ui/ReplayTheater';
+import { SoundIcon } from './ui/SoundIcon';
+import { Splash } from './ui/Splash';
 import { Table } from './ui/Table';
 import { emptyStats, accumulate } from './ui/stats';
 import type { SessionStats } from './ui/stats';
@@ -25,7 +27,7 @@ import { buildHandRecord } from './profile/records';
 import { leakLabel } from './profile/tags';
 import './App.css';
 
-type Screen = 'home' | 'report' | 'game';
+type Screen = 'splash' | 'home' | 'report' | 'game';
 
 function GameScreen({
   game, stats, records, onLeave, onDrill,
@@ -96,8 +98,14 @@ function GameScreen({
           <span className="game-header-stack">
             {personaName}: {session ? (session.stacks[1] / BIG_BLIND).toFixed(1) : '0.0'} BB
           </span>
-          <button type="button" className="btn btn-icon" onClick={toggleSound} aria-label="toggle sound">
-            {soundOn ? '🔊' : '🔇'}
+          <button
+            type="button"
+            className={`btn btn-icon btn-sound${soundOn ? ' btn-sound-on' : ''}`}
+            onClick={toggleSound}
+            aria-label="toggle sound"
+            aria-pressed={soundOn}
+          >
+            <SoundIcon on={soundOn} />
           </button>
           <button type="button" className="btn btn-ghost" onClick={onLeave}>
             Leave table
@@ -168,7 +176,7 @@ function App() {
   const [stats, setStats] = useState<SessionStats>(emptyStats());
   const counted = useRef(0);
 
-  const [screen, setScreen] = useState<Screen>('home');
+  const [screen, setScreen] = useState<Screen>('splash');
   const [store, setStore] = useState<ProfileStore | null>(null);
   const [records, setRecords] = useState<HandRecord[]>([]);
   const [drillNotice, setDrillNotice] = useState<string | null>(null);
@@ -258,7 +266,9 @@ function App() {
   const coach = useMemo(() => coachState(profileStats, records), [profileStats, records]);
 
   let content: ReactNode;
-  if (screen === 'home') {
+  if (screen === 'splash') {
+    content = <Splash onEnter={() => setScreen('home')} />;
+  } else if (screen === 'home') {
     content = (
       <>
         <CoachFeed
@@ -269,6 +279,7 @@ function App() {
           onDrill={handleDrill}
           onReport={() => setScreen('report')}
           onOpenHand={handleOpenHand}
+          onHome={() => setScreen('splash')}
         />
         {drillNotice && (
           <p className="app-drill-notice" role="alert">
@@ -279,7 +290,12 @@ function App() {
     );
   } else if (screen === 'report') {
     content = (
-      <ReportCard stats={profileStats} onBack={() => setScreen('home')} onOpenHand={handleOpenHand} />
+      <ReportCard
+        stats={profileStats}
+        records={records}
+        onBack={() => setScreen('home')}
+        onOpenHand={handleOpenHand}
+      />
     );
   } else {
     content = (

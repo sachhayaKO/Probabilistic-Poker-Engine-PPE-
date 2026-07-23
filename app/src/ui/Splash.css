@@ -1,0 +1,124 @@
+/* ── Splash: the door to the casino ──────────────────────────────── */
+.splash {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  /* The green felt now comes from the ghost table behind the stage;
+     keep only the low gold ambience and the base dark. */
+  background:
+    radial-gradient(120% 90% at 50% 110%, rgba(201, 162, 39, 0.08), transparent 70%),
+    var(--bg);
+  cursor: pointer;
+}
+
+.splash-stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 560px;
+}
+
+.splash-card {
+  width: 88px;
+  height: 126px;
+  margin-bottom: 28px;
+  transform: rotate(-6deg);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.6), 0 0 24px rgba(201, 162, 39, 0.18);
+}
+
+.splash-title {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 6vw, 44px);
+  font-weight: 700;
+  line-height: 1.12;
+  color: var(--cream);
+  letter-spacing: 0.01em;
+}
+
+.splash-flourish {
+  display: block;
+  margin-top: 10px;
+  font-size: clamp(12px, 2.4vw, 15px);
+  font-weight: 400;
+  color: var(--gold-soft);
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+}
+
+.splash-tagline {
+  margin: 0 0 32px;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.splash-enter {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px 30px;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+}
+
+.splash-enter:hover:not(:disabled) {
+  animation: glow-pulse 1.6s ease-in-out infinite;
+}
+
+.splash-enter:focus-visible {
+  outline: 2px solid var(--gold-soft);
+  outline-offset: 2px;
+}
+
+.splash-enter-pip {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+
+/* Entrance: title fades up after the card deals in */
+@keyframes splash-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.splash-title,
+.splash-tagline,
+.splash-enter {
+  animation: splash-rise 420ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+.splash-title {
+  animation-delay: 180ms;
+}
+
+.splash-tagline {
+  animation-delay: 280ms;
+}
+
+.splash-enter {
+  animation-delay: 380ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-title,
+  .splash-tagline,
+  .splash-enter,
+  .splash-card {
+    animation: none !important;
+  }
+}

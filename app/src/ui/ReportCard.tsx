@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import type { ProfileStats } from '../profile/aggregate';
+import type { HandRecord } from '../profile/records';
+import { MatchHistory } from './MatchHistory';
 import './ReportCard.css';
 
 export interface ReportCardProps {
   stats: ProfileStats;
+  records: HandRecord[];
   onBack: () => void;
   onOpenHand: (handId: number) => void;
 }
@@ -34,12 +38,21 @@ function TrendChart({ trend }: { trend: ProfileStats['trend'] }) {
       role="img"
       aria-label="accuracy trend"
     >
+      <defs>
+        <linearGradient id="trend-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--gold)" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="var(--gold)" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={`0,${height} ${points} ${width},${height}`} fill="url(#trend-fill)" />
       <polyline points={points} fill="none" stroke="var(--gold)" strokeWidth="1.5" />
     </svg>
   );
 }
 
-export function ReportCard({ stats, onBack, onOpenHand }: ReportCardProps) {
+export function ReportCard({ stats, records, onBack, onOpenHand }: ReportCardProps) {
+  const [tab, setTab] = useState<'overview' | 'history'>('overview');
+
   return (
     <div className="report-card">
       <header className="report-header">
@@ -49,7 +62,30 @@ export function ReportCard({ stats, onBack, onOpenHand }: ReportCardProps) {
         </button>
       </header>
 
-      {stats.handsGraded === 0 ? (
+      <div className="report-tabs" role="tablist" aria-label="report sections">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'overview'}
+          className={`report-tab${tab === 'overview' ? ' report-tab-active' : ''}`}
+          onClick={() => setTab('overview')}
+        >
+          Overview
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'history'}
+          className={`report-tab${tab === 'history' ? ' report-tab-active' : ''}`}
+          onClick={() => setTab('history')}
+        >
+          Match History
+        </button>
+      </div>
+
+      {tab === 'history' ? (
+        <MatchHistory records={records} onOpenHand={onOpenHand} />
+      ) : stats.handsGraded === 0 ? (
         <p className="report-empty">Play some hands — your report card will appear here.</p>
       ) : (
         <>

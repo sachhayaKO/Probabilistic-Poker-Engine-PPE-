@@ -133,9 +133,73 @@ describe('CoachFeed', () => {
     expect(onPlay).toHaveBeenCalledWith('training', 'balanced');
 
     fireEvent.click(screen.getByRole('radio', { name: /match/i }));
-    fireEvent.change(screen.getByLabelText(/persona/i), { target: { value: 'maniac' } });
+    fireEvent.click(screen.getByRole('radio', { name: /the maniac/i }));
     fireEvent.click(screen.getByRole('button', { name: /deal in/i }));
     expect(onPlay).toHaveBeenCalledWith('match', 'maniac');
+  });
+
+  it('(e2) Random toggle dims the persona cards, deals a random bot, and turns off when a bot is clicked', () => {
+    const onPlay = vi.fn();
+    render(
+      <CoachFeed
+        stats={makeStats()}
+        coach={makeCoach()}
+        persistent={true}
+        onPlay={onPlay}
+        onDrill={noop}
+        onReport={noop}
+        onOpenHand={noop}
+      />,
+    );
+
+    const toggle = screen.getByRole('button', { name: /random/i });
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    const cards = screen.getByRole('radiogroup', { name: /opponent/i });
+    expect(cards.classList.contains('coach-persona-cards-random')).toBe(true);
+    const balanced = screen.getByRole('radio', {
+      name: /the balanced player/i,
+    }) as HTMLInputElement;
+    expect(balanced.checked).toBe(false);
+
+    fireEvent.click(screen.getByRole('button', { name: /deal in/i }));
+    expect(onPlay).toHaveBeenCalledTimes(1);
+    const [dealtMode, dealtPersona] = onPlay.mock.calls[0];
+    expect(dealtMode).toBe('training');
+    expect(['nit', 'maniac', 'station', 'balanced']).toContain(dealtPersona);
+
+    fireEvent.click(screen.getByRole('radio', { name: /the nit/i }));
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+    expect(cards.classList.contains('coach-persona-cards-random')).toBe(false);
+    const nit = screen.getByRole('radio', { name: /the nit/i }) as HTMLInputElement;
+    expect(nit.checked).toBe(true);
+  });
+
+  it('(f) renders all four persona cards with descriptions', () => {
+    render(
+      <CoachFeed
+        stats={makeStats()}
+        coach={makeCoach()}
+        persistent={true}
+        onPlay={noop}
+        onDrill={noop}
+        onReport={noop}
+        onOpenHand={noop}
+      />,
+    );
+
+    const group = screen.getByRole('radiogroup', { name: 'opponent' });
+    expect(group).toBeTruthy();
+    for (const name of [/the nit/i, /the maniac/i, /the calling station/i, /the balanced player/i]) {
+      expect(screen.getByRole('radio', { name })).toBeTruthy();
+    }
+    expect(screen.getByText(/plays only premium hands/i)).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /the balanced player/i })).toHaveProperty(
+      'checked',
+      true,
+    );
   });
 
   it('(e) Report Card button calls onReport', () => {
@@ -154,5 +218,40 @@ describe('CoachFeed', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /report card/i }));
     expect(onReport).toHaveBeenCalled();
+  });
+
+  it('(f) Home button calls onHome when provided', () => {
+    const onHome = vi.fn();
+    render(
+      <CoachFeed
+        stats={makeStats()}
+        coach={makeCoach()}
+        persistent={true}
+        onPlay={noop}
+        onDrill={noop}
+        onReport={noop}
+        onOpenHand={noop}
+        onHome={onHome}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /home/i }));
+    expect(onHome).toHaveBeenCalled();
+  });
+
+  it('(g) Home button is absent when onHome is not provided', () => {
+    render(
+      <CoachFeed
+        stats={makeStats()}
+        coach={makeCoach()}
+        persistent={true}
+        onPlay={noop}
+        onDrill={noop}
+        onReport={noop}
+        onOpenHand={noop}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: /home/i })).toBeNull();
   });
 });
